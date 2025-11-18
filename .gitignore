@@ -1,0 +1,23 @@
+# Build directories
+obj_dir/
+build/
+*.d
+*.o
+*.out
+
+# Verilator traces
+*.vcd
+*.fst
+
+# Editor cruft
+*~
+.vscode/
+.idea/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Misc
+.vbuddy/
+*.log
