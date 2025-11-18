@@ -1,8 +1,6 @@
 # EIE RISC-V CPU
 
-A teaching / experimental RISC-V CPU project for Imperial EIE.
-
-## High-level layout
+## Project Structure
 
 - \`rtl/\` — SystemVerilog RTL source
   - \`single_cycle/\` — baseline single-cycle core
@@ -20,7 +18,14 @@ A teaching / experimental RISC-V CPU project for Imperial EIE.
 - \`tools/\` — scripts and CI helpers
 - \`docs/\` — design and verification documentation
 
-This repo is structured to support:
-- clean separation of RTL / testbench / software / tooling
-- scalable extensions (pipeline, caches, branch prediction, etc.)
-- professional GitHub workflow with CI and code review.
+## Development Workflow
+
+## Task Overview
+
+## Building and Testing
+
+##Project Status
+
+## Contact
+
+

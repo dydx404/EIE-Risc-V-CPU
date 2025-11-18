@@ -1,22 +1,21 @@
-## Summary
+# Pull Request
 
-What does this PR implement?
+## Summary
+Explain what this PR does and why.
 
 ## Related Task
-
-- Link to section in `docs/TASKS.md`
+Link the task from `docs/TASKS.md`  
+Example: `SC1 — ALU`
 
 ## Changes
-
-- Bullet list of key changes
+- What modules/files did you modify?
+- Any new modules?
+- Any interface changes?
 
 ## Testing
-
-- Testbench(es) used:
-- How you verified correctness:
+- How did you verify correctness?
+- What testbenches ran?
+- Any known limitations?
 
 ## Notes
-
-- Limitations
-- TODOs
-
+Anything important for reviewers to know.
