@@ -17,9 +17,8 @@ module ControlUnit (
                                    //MUX needs 3 inputs in order to implement JAL, otherwise
                                    //we cannot store next instruction
                                    
-                                   //resultsrc = 3 is used for MUX to decide between
-                                   //PC and RD1 into PCTarget for JAL vs JALR
-    output reg          memwrite 
+    output reg          memwrite,
+    output reg          jalre      //jalr enable, used for MUX before PCTarget 
 );
 
     always @* begin
@@ -32,6 +31,7 @@ module ControlUnit (
         pcsrc    = 1'b0;
         resultsrc = 0;
         memwrite = 0;
+        jalre = 0;
         //
 
         case (opcode)
@@ -44,6 +44,7 @@ module ControlUnit (
                     pcsrc = 1'b0;
                     resultsrc = 2'b00;
                     memwrite = 0;
+                    jalre = 0;
                 end
             end
             //LI can be implemented as ADDI rd, x0, imm
@@ -57,6 +58,7 @@ module ControlUnit (
                     pcsrc = ~zero;
                     resultsrc = 2'b00;
                     memwrite = 0;
+                    jalre = 0;
                 end
             end
 
@@ -69,6 +71,7 @@ module ControlUnit (
                     pcsrc = 1'b0;
                     resultsrc = 2'b00;
                     memwrite = 0;
+                    jalre = 0;
                 end
             end
 
@@ -81,6 +84,7 @@ module ControlUnit (
                     pcsrc = 1'b0;
                     resultsrc = 2'b01;
                     memwrite = 0;
+                    jalre = 0;
                     //how to implement zero extension?
                 end
             end
@@ -94,6 +98,7 @@ module ControlUnit (
                     pcsrc = 1'b0;
                     resultsrc = 2'b00;
                     memwrite = 1;
+                    jalre = 0;
                 end
 
             end
@@ -106,6 +111,7 @@ module ControlUnit (
                 pcsrc = 1'b1;
                 resultsrc = 2'b10;
                 memwrite = 0; 
+                jalre = 0;
             end
             //J label can be implemented as JAL x0, label
 
@@ -115,8 +121,9 @@ module ControlUnit (
                 immsrc   = 2'b00;
                 alucontrol = 3'b000;
                 pcsrc = 1'b1;
-                resultsrc = 2'b11;
+                resultsrc = 2'b00;
                 memwrite = 0; 
+                jalre = 1;
             end
             //RET can be implemented by JALR x0, x1, 0
 
@@ -128,6 +135,7 @@ module ControlUnit (
                 pcsrc    = 1'b0;
                 resultsrc = 2'b00;
                 memwrite = 0;
+                jalre = 0;
             end
         endcase
     end
