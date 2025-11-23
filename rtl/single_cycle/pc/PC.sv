@@ -3,8 +3,9 @@ module PC #(
 ) (
     input   logic                     clk,
     input   logic                     rst,
-    input   logic                     pcsrc,
+    input   logic [1:0]               pcsrc,
     input   logic [DATA_WIDTH-1:0]    immop,
+    input   logic [DATA_WIDTH-1:0]    alu_out,
     output  logic [DATA_WIDTH-1:0]    pc
 );
     // Wires
@@ -30,11 +31,12 @@ module PC #(
     );
 
     // Instantiate mux
-    mux #(
+    mux4 #(
         .DATA_WIDTH(DATA_WIDTH)
     ) pc_mux_inst (
         .in0(pc_plus4),
         .in1(pc_target),
+        .in2(alu_out),
         .sel(pcsrc),
         .out(pc_next)
     );
