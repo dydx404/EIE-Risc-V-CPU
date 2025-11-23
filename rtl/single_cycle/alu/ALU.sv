@@ -1,4 +1,3 @@
-// rtl/single_cycle/alu/ALU.sv
 module ALU #(
     parameter LEN = 32
 ) (
