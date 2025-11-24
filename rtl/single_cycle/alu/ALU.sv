@@ -33,7 +33,7 @@ module ALU #(
             4'b0111: aluout = aluop1 << aluop2[4:0];            // SLL
             4'b1000: aluout = aluop1 >> aluop2[4:0];            // SRL
 
-            4'b1001: aluout = $signed(aluop1) >>> aluop2[4:0]   // SRA
+            4'b1001: aluout = $signed(aluop1) >>> aluop2[4:0];   // SRA
 
             default: aluout = {LEN{1'b0}};                      // default case
         endcase

@@ -14,34 +14,54 @@ int main(int argc, char **argv, char **env) {
     tfp->open("alu.vcd");
 
     struct Test {
-        uint32_t a;
-        uint32_t b;
-        uint8_t  ctrl;
-        uint32_t exp;
-        bool     exp_zero;
+        uint32_t    a;
+        uint32_t    b;
+        uint8_t     ctrl;      // 4-bit ALU control
+        uint32_t    exp;       // expected aluout
+        bool        exp_zero;  // expected zero flag
         const char* name;
     };
 
     Test tests[] = {
-        {10,  5, 0b000, 15, false, "ADD"},
-        {10,  5, 0b001, 5,  false, "SUB"},
-        {5,   5, 0b001, 0,  true,  "SUB_zero"},
-        {0xF0F0F0F0, 0x0FF00FF0, 0b010, 0x00F000F0, false, "AND"},
-        {0xF0F0F0F0, 0x0FF00FF0, 0b011, 0xFFF0FFF0, false, "OR"},
-        {0xAAAA5555, 0xFFFF0000, 0b100, 0x55555555, false, "XOR"},
-        {(uint32_t)-3, 5, 0b101, 1, false, "SLT_lt"},
-        {7, (uint32_t)-2, 0b101, 0, true,  "SLT_ge"},
-        {1, 4, 0b110, 16, false, "SLL"},
-        {0x80, 3, 0b111, 0x10, false, "SRL"},
+        // --- ADD / SUB ---
+        {10,          5,         0b0000, 15,         false, "ADD"},
+        {0xFFFFFFFFu, 1,         0b0000, 0,          true,  "ADD_wrap_zero"},
+        {10,          5,         0b0001, 5,          false, "SUB"},
+        {5,           5,         0b0001, 0,          true,  "SUB_zero"},
+
+        // --- AND / OR / XOR ---
+        {0xF0F0F0F0,  0x0FF00FF0, 0b0010, 0x00F000F0, false, "AND"},
+        {0xF0F0F0F0,  0x0FF00FF0, 0b0011, 0xFFF0FFF0, false, "OR"},
+        {0xAAAA5555,  0xFFFF0000, 0b0100, 0x55555555, false, "XOR"},
+
+        // --- SLT (signed) ---
+        {(uint32_t)-3,           5,        0b0101, 1, false, "SLT_signed_lt"},
+        {7,            (uint32_t)-2,       0b0101, 0, true,  "SLT_signed_ge"},
+
+        // --- SLTU (unsigned) ---
+        {3,            5,         0b0110, 1, false, "SLTU_lt"},
+        {0xFFFFFFFFu,  0,         0b0110, 0, true,  "SLTU_ge"},
+
+        // --- SLL ---
+        {1,            4,         0b0111, 16,        false, "SLL"},
+        // shift amount > 31, should be masked by [4:0] (36 -> 4)
+        {1,            36,        0b0111, 16,        false, "SLL_shamt_mask"},
+
+        // --- SRL ---
+        {0x00000080,   3,         0b1000, 0x00000010, false, "SRL"},
+        {0xFFFFFFFFu,  4,         0b1000, 0x0FFFFFFF, false, "SRL_all_ones"},
+
+        // --- SRA ---
+        {0xF0000000u,  4,         0b1001, 0xFF000000, false, "SRA_neg_shift"},
+        {0x80000000u,  1,         0b1001, 0xC0000000, false, "SRA_sign_extend"},
+        {0x00000000u,  5,         0b1001, 0x00000000, true,  "SRA_zero"},
     };
 
     int NUM_TESTS = sizeof(tests) / sizeof(tests[0]);
     bool all_ok = true;
 
-    // testss
     for (int i = 0; i < NUM_TESTS; i++) {
-
-        // inputs
+        // set inputs
         top->aluop1   = tests[i].a;
         top->aluop2   = tests[i].b;
         top->alu_ctrl = tests[i].ctrl;
@@ -49,6 +69,7 @@ int main(int argc, char **argv, char **env) {
         // evaluate ALU
         top->eval();
 
+        // simple time = i for waveform
         tfp->dump(i);
 
         // check result
@@ -60,17 +81,18 @@ int main(int argc, char **argv, char **env) {
 
         if (!pass_res || !pass_zero) {
             all_ok = false;
-            printf("FAIL %-12s ctrl=%u  a=0x%08X b=0x%08X  got=0x%08X zero=%d  exp=0x%08X zero=%d\n",
+            printf(
+                "FAIL %-16s ctrl=0x%X  a=0x%08X b=0x%08X  "
+                "got=0x%08X zero=%d  exp=0x%08X zero=%d\n",
                 tests[i].name,
                 tests[i].ctrl, tests[i].a, tests[i].b,
                 got_res, got_zero,
                 tests[i].exp, tests[i].exp_zero
             );
         } else {
-            printf("PASS %-12s\n", tests[i].name);
+            printf("PASS %-16s\n", tests[i].name);
         }
     }
-
 
     // close
     tfp->close();
