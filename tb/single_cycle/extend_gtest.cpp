@@ -21,7 +21,7 @@ protected:
 TEST_F(TestExtend, I-Typep)
 {
     uint32_t imm = 0x00100000;
-    uint8_t  immsrc = 0b00;
+    uint8_t  immsrc = 0b000;
 
     dut->imm = imm >> 7;
     dut->immsrc = immsrc;
@@ -34,7 +34,7 @@ TEST_F(TestExtend, I-Typep)
 TEST_F(TestExtend, I-Typen)
 {
     uint32_t imm = 0xFFF00000;
-    uint8_t  immsrc = 0b00;
+    uint8_t  immsrc = 0b000;
 
     dut->imm = imm >> 7;
     dut->immsrc = immsrc;
@@ -49,7 +49,7 @@ TEST_F(TestExtend, I-Typen)
 TEST_F(TestExtend, S-Type)
 {
     uint32_t imm = 0x00F00F80;
-    uint8_t  immsrc = 0b01;
+    uint8_t  immsrc = 0b001;
 
     dut->imm = imm >> 7;
     dut->immsrc = immsrc;
@@ -66,7 +66,7 @@ TEST_F(TestExtend, S-Type)
 TEST_F(TestExtend, B-Type)
 {
     uint32_t imm = 0x80000000;
-    uint8_t  immsrc = 0b10;
+    uint8_t  immsrc = 0b010;
 
     dut->imm = imm >> 7;
     dut->immsrc = immsrc;
@@ -81,10 +81,26 @@ TEST_F(TestExtend, B-Type)
     EXPECT_EQ(dut->immext, expected);
 }
 
+TEST_F(TestExtend, U-Type)
+{
+    uint32_t imm = 0x8AF30037;
+    uint8_t  immsrc = 0b011;
+
+    dut->imm = imm >> 7;
+    dut->immsrc = immsrc;
+    dut->eval();
+
+    uint32_t upper = (imm >> 12) & 0xFFFFF;
+    int32_t expected = (upper << 12);
+
+    EXPECT_EQ(dut->immext, expected);
+}
+
+
 TEST_F(TestExtend, J-Type){
 
     uint32_t imm = 0x0FF12345;
-    uint8_t immsrc = 0b11;
+    uint8_t immsrc = 0b100;
 
     dut->imm = imm >> 7;
     dut->immsrc = immsrc;
