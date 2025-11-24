@@ -111,6 +111,15 @@ TEST_F(PCTest, BranchOverridesIncrement)
     EXPECT_EQ(top->pc, 100u);
 }
 
+TEST_F(PCTest, MuxGround)
+{
+    top->alu_out = 100;
+    top->pcsrc = 3;
+
+    tick();
+    EXPECT_EQ(top->pc, 0u);
+}
+
 // -----------------------------------------------------
 // MAIN
 // -----------------------------------------------------
