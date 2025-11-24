@@ -37,6 +37,7 @@ module PC #(
         .in0(pc_plus4),
         .in1(pc_target),
         .in2(alu_out),
+        .in3(0),
         .sel(pcsrc),
         .out(pc_next)
     );
