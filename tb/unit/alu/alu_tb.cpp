@@ -23,35 +23,35 @@ int main(int argc, char **argv, char **env) {
     };
 
     Test tests[] = {
-        // --- ADD / SUB ---
+        // ADD, SUB
         {10,          5,         0b0000, 15,         false, "ADD"},
         {0xFFFFFFFFu, 1,         0b0000, 0,          true,  "ADD_wrap_zero"},
         {10,          5,         0b0001, 5,          false, "SUB"},
         {5,           5,         0b0001, 0,          true,  "SUB_zero"},
 
-        // --- AND / OR / XOR ---
+        // AND, OR, XOR
         {0xF0F0F0F0,  0x0FF00FF0, 0b0010, 0x00F000F0, false, "AND"},
         {0xF0F0F0F0,  0x0FF00FF0, 0b0011, 0xFFF0FFF0, false, "OR"},
         {0xAAAA5555,  0xFFFF0000, 0b0100, 0x55555555, false, "XOR"},
 
-        // --- SLT (signed) ---
+        // SLT (signed)
         {(uint32_t)-3,           5,        0b0101, 1, false, "SLT_signed_lt"},
         {7,            (uint32_t)-2,       0b0101, 0, true,  "SLT_signed_ge"},
 
-        // --- SLTU (unsigned) ---
+        // SLTU (unsigned)
         {3,            5,         0b0110, 1, false, "SLTU_lt"},
         {0xFFFFFFFFu,  0,         0b0110, 0, true,  "SLTU_ge"},
 
-        // --- SLL ---
+        // SLL
         {1,            4,         0b0111, 16,        false, "SLL"},
         // shift amount > 31, should be masked by [4:0] (36 -> 4)
         {1,            36,        0b0111, 16,        false, "SLL_shamt_mask"},
 
-        // --- SRL ---
+        // SRL
         {0x00000080,   3,         0b1000, 0x00000010, false, "SRL"},
         {0xFFFFFFFFu,  4,         0b1000, 0x0FFFFFFF, false, "SRL_all_ones"},
 
-        // --- SRA ---
+        // SRA
         {0xF0000000u,  4,         0b1001, 0xFF000000, false, "SRA_neg_shift"},
         {0x80000000u,  1,         0b1001, 0xC0000000, false, "SRA_sign_extend"},
         {0x00000000u,  5,         0b1001, 0x00000000, true,  "SRA_zero"},
