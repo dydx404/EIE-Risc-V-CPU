@@ -1,7 +1,7 @@
 // Sign-extend / immediate generator for RV32I
 // Immediate = instr[31:7]  (upper 25 bits of instruction)
-module sextend #(
-    parameter DATA_WIDTH = 32
+module Extend #(
+
 ) (
     input  logic [31:7] Immediate,   // instr[31:7]
     input  logic [2:0]  ImmSrc,      // 000=I, 001=S, 010=B, 011=J, 100=U

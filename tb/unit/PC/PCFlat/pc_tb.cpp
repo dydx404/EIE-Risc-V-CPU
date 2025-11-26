@@ -1,9 +1,9 @@
 #include "gtest/gtest.h"
-#include "VPC.h"
+#include "VPCFlat.h"
 #include "verilated.h"
 #include "verilated_vcd_c.h"
 
-VPC *top;
+VPCFlat *top;
 VerilatedVcdC *tfp;
 unsigned long tickcount = 0;
 
@@ -127,7 +127,7 @@ int main(int argc, char **argv)
 {
     Verilated::commandArgs(argc, argv);
 
-    top = new VPC;
+    top = new VPCFlat;
     tfp = new VerilatedVcdC;
 
     Verilated::traceEverOn(true);
