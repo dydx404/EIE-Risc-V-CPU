@@ -5,20 +5,18 @@ module ControlUnit (
     input  wire         zero,
     output reg          regwrite,
     output reg          alusrc,
-    output reg  [1:0]   immsrc,
+    output reg  [2:0]   immsrc,
     //immsrc
-    //00 = I type
-    //01 = S type
-    //10 = B type
-    //11 = J type
-    output reg  [2:0]   alucontrol,  
-    output reg          pcsrc,
-    output reg  [1:0]   resultsrc, //alu(0), datamem(1), or PC + 4(2) result to reg
-                                   //MUX needs 3 inputs in order to implement JAL, otherwise
-                                   //we cannot store next instruction
-                                   
-    output reg          memwrite,
-    output reg          jalre      //jalr enable, used for MUX before PCTarget 
+    //000 = I type
+    //001 = S type
+    //010 = B type
+    //011 = U type
+    //100 = J type
+    output reg  [3:0]   alucontrol,  
+    output reg  [1:0]   pcsrc,
+    output reg  [1:0]   resultsrc, 
+    output reg  [2:0]   addressingcontrol,                                
+    output reg          memwrite
 );
 
     always @* begin
@@ -26,12 +24,12 @@ module ControlUnit (
         //
         regwrite = 1'b0;
         alusrc   = 1'b0;
-        immsrc   = 2'b00;
-        alucontrol  = 3'b000;
-        pcsrc    = 1'b0;
-        resultsrc = 0;
+        immsrc   = 3'b000;
+        alucontrol  = 4'b0000;
+        pcsrc    = 2'b00;
+        resultsrc = 2'b00;
         memwrite = 0;
-        jalre = 0;
+        addressingcontrol = 3'b000;
         //
 
         case (opcode)
@@ -39,12 +37,12 @@ module ControlUnit (
                 if (funct3 == 3'b000) begin //addi
                     regwrite = 1'b1;
                     alusrc   = 1'b1;
-                    immsrc   = 2'b00;
-                    alucontrol = 3'b000;
-                    pcsrc = 1'b0;
+                    immsrc   = 3'b000;
+                    alucontrol = 4'b0000;
+                    pcsrc = 2'b00;
                     resultsrc = 2'b00;
                     memwrite = 0;
-                    jalre = 0;
+                    addressingcontrol = 3'b000;
                 end
             end
             //LI can be implemented as ADDI rd, x0, imm
@@ -53,12 +51,12 @@ module ControlUnit (
                 if (funct3 == 3'b001) begin //bne
                     regwrite = 1'b0;
                     alusrc   = 1'b0;
-                    immsrc   = 2'b10;
-                    alucontrol  = 3'b001;
-                    pcsrc = ~zero;
+                    immsrc   = 3'b010;
+                    alucontrol  = 4'b0001;
+                    pcsrc = {{1'b0},~zero};
                     resultsrc = 2'b00;
                     memwrite = 0;
-                    jalre = 0;
+                    addressingcontrol = 3'b000;
                 end
             end
 
@@ -66,26 +64,36 @@ module ControlUnit (
                 if ((funct3 == 3'b000) && (funct7 == 7'b0000000)) begin
                     regwrite = 1'b1;
                     alusrc   = 1'b0;
-                    immsrc   = 2'b00;
-                    alucontrol = 3'b000;
-                    pcsrc = 1'b0;
+                    immsrc   = 3'b000;
+                    alucontrol = 4'b0000;
+                    pcsrc = 2'b00;
                     resultsrc = 2'b00;
                     memwrite = 0;
-                    jalre = 0;
+                    addressingcontrol = 3'b000;
                 end
             end
 
-            7'b0000011: begin //lbu
-                if (funct3 == 3'b100) begin
+            7'b0000011: begin 
+                if (funct3 == 3'b100) begin //lbu
                     regwrite = 1'b1;
                     alusrc   = 1'b1;
-                    immsrc   = 2'b00;
-                    alucontrol = 3'b000;
-                    pcsrc = 1'b0;
+                    immsrc   = 3'b000;
+                    alucontrol = 4'b0000;
+                    pcsrc = 2'b00;
                     resultsrc = 2'b01;
                     memwrite = 0;
-                    jalre = 0;
-                    //how to implement zero extension?
+                    addressingcontrol = 3'b000;
+                end
+
+                else if (funct3 == 3'b000) begin //lb
+                    regwrite = 1'b1;
+                    alusrc   = 1'b1;
+                    immsrc   = 3'b000;
+                    alucontrol = 4'b0000;
+                    pcsrc = 2'b00;
+                    resultsrc = 2'b01;
+                    memwrite = 0;
+                    addressingcontrol = 3'b000;
                 end
             end
 
@@ -93,12 +101,12 @@ module ControlUnit (
                 if (funct3 == 3'b000) begin
                     regwrite = 1'b0;
                     alusrc   = 1'b1;
-                    immsrc   = 2'b01;
-                    alucontrol = 3'b000;
-                    pcsrc = 1'b0;
+                    immsrc   = 3'b001;
+                    alucontrol = 4'b0000;
+                    pcsrc = 2'b00;
                     resultsrc = 2'b00;
                     memwrite = 1;
-                    jalre = 0;
+                    addressingcontrol = 3'b000;
                 end
 
             end
@@ -106,36 +114,47 @@ module ControlUnit (
             7'b1101111: begin //jal
                 regwrite = 1'b1;
                 alusrc   = 1'b0;
-                immsrc   = 2'b11;
-                alucontrol = 3'b000;
-                pcsrc = 1'b1;
+                immsrc   = 3'b100;
+                alucontrol = 4'b0000;
+                pcsrc = 2'b01;
                 resultsrc = 2'b10;
                 memwrite = 0; 
-                jalre = 0;
+                addressingcontrol = 3'b000;
             end
             //J label can be implemented as JAL x0, label
 
             7'b1100111: begin //jalr, used for RET
                 regwrite = 1'b0;
                 alusrc   = 1'b0;
-                immsrc   = 2'b00;
-                alucontrol = 3'b000;
-                pcsrc = 1'b1;
+                immsrc   = 3'b000;
+                alucontrol = 4'b0000;
+                pcsrc = 2'b10;
                 resultsrc = 2'b00;
                 memwrite = 0; 
-                jalre = 1;
+                addressingcontrol = 3'b000;
+            end
+
+            7'b0110111: begin //lui
+                regwrite = 1'b1;
+                alusrc   = 1'b1;
+                immsrc   = 3'b011;
+                alucontrol = 4'b0000; //use register 0 to add 0
+                pcsrc = 2'b00;
+                resultsrc = 2'b00;
+                memwrite = 0; 
+                addressingcontrol = 3'b000;
             end
             //RET can be implemented by JALR x0, x1, 0
 
             default: begin
                 regwrite = 1'b0;
                 alusrc   = 1'b0;
-                immsrc   = 2'b00;
-                alucontrol  = 3'b000;
-                pcsrc    = 1'b0;
+                immsrc   = 3'b000;
+                alucontrol  = 4'b0000;
+                pcsrc    = 2'b00;
                 resultsrc = 2'b00;
                 memwrite = 0;
-                jalre = 0;
+                addressingcontrol = 3'b000;
             end
         endcase
     end
