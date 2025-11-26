@@ -10,6 +10,7 @@ module InstrMem #(
 
     // Initialize Instruction Memory (replace with $readmemh if needed)
     initial begin
+        $readmemh("program.mem", memory);
         // Add more instructions as needed
     end
 
