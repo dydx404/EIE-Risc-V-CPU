@@ -116,7 +116,7 @@ module Datapath (
     ) alu_inst (
         .aluop1   (rd1),
         .aluop2   (srcB),
-        .alu_ctrl (alucontrol),
+        .alu_ctrl (alucontrol),`
         .aluout   (alu_result),
         .zero     (zero)
     );
