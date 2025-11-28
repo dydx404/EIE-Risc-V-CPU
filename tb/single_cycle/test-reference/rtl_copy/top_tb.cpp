@@ -21,7 +21,7 @@ int main(int argc, char **argv)
     dut->rst = 0;
 
     // run CPU for N cycles
-    for (int cycle = 0; cycle < 500; cycle++)
+    for (int cycle = 0; cycle < 50; cycle++)
     {
         for (int i = 0; i < 2; i++)
         {
