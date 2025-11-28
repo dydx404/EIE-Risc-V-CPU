@@ -1,20 +1,14 @@
-# 0x00000000
-main:
-    jal   ra, L1          # 00c000ef  → ra = 0x00000004, PC = 0x0000000c
+# regfile-zero test
 
-# 0x00000004  (return target of the jal)
-    addi  a0, zero, 2     # 00200513  → a0 = 2
+    addi x1, x0, 5        # x1 = 5
+    addi x2, x0, 7        # x2 = 7
 
-# 0x00000008
-    jal   zero, L2        # 00c0006f  → unconditional jump to L2 (no link)
+    addi x0, x0, 99       # attempt write to x0 (must be ignored)
 
-# 0x0000000c
-L1:
-    addi  a0, zero, 1     # 00100513  → a0 = 1
+    add  x3, x1, x2       # x3 = 12
 
-# 0x00000010
-    jalr  zero, 0(ra)     # 00008067  → ret; jump back to 0x00000004
+    add  x4, x0, x3       # x4 = x0 + 12 = 12 (if x0 broken → incorrect)
 
-# 0x00000014
-L2:
-    addi  a0, zero, 3     # 00300513  → a0 = 3
+    addi a0, x4, 0        # expected a0 = 12
+
+    beq x0, x0, .         # infinite loop to stabilize output
