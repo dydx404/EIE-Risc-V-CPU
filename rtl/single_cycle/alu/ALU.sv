@@ -33,7 +33,14 @@ module ALU #(
             4'b0111: aluout = aluop1 << aluop2[4:0];            // SLL
             4'b1000: aluout = aluop1 >> aluop2[4:0];            // SRL
 
-            4'b1001: aluout = $signed(aluop1) >>> aluop2[4:0];   // SRA
+            4'b1011: aluout = $signed(aluop1) >>> aluop2[4:0];  // SRA / SRAI
+
+            // LUI:
+            rd = imm (upper 20 bits, low 12 = 0) - ImmExt
+            // For LUI, ControlUnit sets ALUSrc=1 so aluop2 = ImmExt.
+
+            4'b1111: aluout = aluop2;
+
 
             default: aluout = {LEN{1'b0}};                      // default case
         endcase
