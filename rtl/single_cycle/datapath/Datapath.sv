@@ -6,7 +6,7 @@ module Datapath (
     input  logic        regwrite,       // write enable for RegFile
     input  logic        alusrc,         // 0: rs2, 1: immext
     input  logic [1:0]  immsrc,         // selects immediate format for Extend
-    input  logic [2:0]  alucontrol,     // 3-bit ALU control from ControlUnit
+    input  logic [3:0]  alucontrol,     // 3-bit ALU control from ControlUnit
     input  logic        pcsrc,          // branch/jump taken (from CU, already uses zero)
     input  logic [1:0]  resultsrc,      // 00: ALU, 01: DataMem, 10: PC+4
     input  logic        memwrite,       // store enable
@@ -116,7 +116,7 @@ module Datapath (
     ) alu_inst (
         .aluop1   (rd1),
         .aluop2   (srcB),
-        .alu_ctrl ({1'b0, alucontrol}),  // (since rn, control unit only geneating 3 bit but alu needs 4 bit (0 start val once corrected))
+        .alu_ctrl (alucontrol),
         .aluout   (alu_result),
         .zero     (zero)
     );
