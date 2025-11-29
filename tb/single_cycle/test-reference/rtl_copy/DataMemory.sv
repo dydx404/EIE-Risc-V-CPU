@@ -122,8 +122,18 @@ module DataMemory #(
                 end
 
                 default: read_data_o = 32'b0;
+
+
+
             endcase
+            //debug
+              
         end
     end
+    
+      always_ff @(posedge clk_i) begin
+                     if (mem_write_i)
+                      $display("[DMEM-WRITE] addr=%h data=%h", addr, write_data_i[7:0]);
+                end
 
 endmodule

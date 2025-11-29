@@ -1,15 +1,18 @@
 .text
+.globl main
 .equ base_pdf, 0x100
 .equ base_data, 0x10000
 .equ max_count, 200
+# this is a modified version of the pdf program that returns the sum
+# of the value of all the bins
+# default distribution is gaussian
 main:
     JAL     ra, init  # jump to init, ra and save position to ra
     JAL     ra, build
-forever:
     JAL     ra, display
-    J       forever
+    J       finish
 
-init:       # function to initialise PDF buffer memory 
+init:       # function to initialise PDF buffer memory
     LI      a1, 0x100           # loop_count a1 = 256
 _loop1:                         # repeat
     ADDI    a1, a1, -1          #     decrement a1
@@ -19,7 +22,7 @@ _loop1:                         # repeat
 
 build:      # function to build prob dist func (pdf)
     LI      a1, base_data       # a1 = base address of data array
-    LI      a2, 0               # a2 = offset into of data array 
+    LI      a2, 0               # a2 = offset into of data array
     LI      a3, base_pdf        # a3 = base address of pdf array
     LI      a4, max_count       # a4 = maximum count to terminate
 _loop2:                         # repeat
@@ -34,10 +37,17 @@ _loop2:                         # repeat
     RET
 
 display:    # function send PDF array value to a0 for display
+    LI      s1, 0               # s1 = counter to sum pdf values (not in original)
     LI      a1, 0               # a1 = offset into pdf array
     LI      a2, 255             # a2 = max index of pdf array
 _loop3:                         # repeat
     LBU     a0, base_pdf(a1)    #   a0 = mem[base_pdf+a1)
-    addi    a1, a1, 1           #   incr 
+    ADD     s1, s1, a0          #   s1 += mem[base_pdf+a1)
+    ADDI    a1, a1, 1           #   incr
     BNE     a1, a2, _loop3      # until end of pdf array
     RET
+
+finish:     # function to set the return value then wait
+    ADDI    a0, s1, 0           # a0 = sum of pdf values (expected = 15363)
+_wait:
+    BNE     a0, zero, _wait     # loop forever

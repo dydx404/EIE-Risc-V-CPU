@@ -162,4 +162,49 @@ module top (
         .pc      (pc)
     );
 
+
+    integer cycle = 0;
+   always_ff @(posedge clk) begin
+    cycle <= cycle + 1;  
+    
+
+
+
+    $display("============================");
+    $display("Cycle %0d", cycle);
+    $display("PC           = %h", pc);
+    $display("instr        = %h", instr);
+
+    // decode signals
+    $display("opcode       = %b", opcode);
+    $display("funct3       = %b", funct3);
+    $display("funct7       = %b", funct7);
+
+    // immediate debugging
+    $display("ImmSrc       = %b", ImmSrc);
+    $display("ImmExt       = %h", immext);
+
+    // ALU inputs/outputs
+    $display("srca (rs1)   = %h", srca);
+    $display("srcb         = %h", srcb);
+    $display("ALUSrc       = %b", ALUSrc);
+    $display("ALUControl   = %b", ALUControl);
+    $display("ALU OUT      = %h", alu_out);
+    $display("zero         = %b", zero);
+
+    // register file writes
+    $display("RegWrite     = %b", RegWrite);
+    $display("rd           = %0d", rd);
+    $display("wd_safe      = %h", wd_safe);
+
+    // memory/debug outputs
+    $display("ResultSrc    = %b", ResultSrc);
+    $display("result       = %h", result);
+
+    // a0 monitor
+    $display("a0 (x10)     = %h", a0);
+
+end
+
+
 endmodule

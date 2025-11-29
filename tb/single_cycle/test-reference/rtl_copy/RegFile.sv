@@ -18,19 +18,17 @@ module RegFile #(
 
     // synchronous write
     always_ff @(posedge clk) begin
-        if (we3) begin
-            if (ad3 != '0)
+        if (we3 && ad3!=5'd0) 
                 reg_file[ad3] <= wd3;   // normal write
-            else
-                reg_file[0]   <= '0;    // keep x0 hard-wired to 0
+       
         end
-    end
+
 
     // asynchronous reads and debug tap
     always_comb begin
-        rd1         = (ad1 == '0) ? '0 : reg_file[ad1];
-        rd2         = (ad2 == '0) ? '0 : reg_file[ad2];
-        testRegData = (testRegAddress == '0) ? '0 : reg_file[testRegAddress];
+        rd1         = (ad1 == 5'0) ? 32'0 : reg_file[ad1];
+        rd2         = (ad2 == 5'0) ? 32'0 : reg_file[ad2];
+        testRegData = (testRegAddress == 5'0) ? 32'0 : reg_file[testRegAddress];
     end
 
 endmodule

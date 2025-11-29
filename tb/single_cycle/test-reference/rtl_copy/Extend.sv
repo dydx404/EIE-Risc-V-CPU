@@ -50,9 +50,8 @@ module Extend #(
             // imm[31:12] placed in upper bits, low 12 bits are zero
             3'b100: ImmExt = {Immediate[31:12], 12'b0};
 
-            default: ImmExt = '0;
+            default: ImmExt = 32'b0;
         endcase
     end
 
 endmodule
-

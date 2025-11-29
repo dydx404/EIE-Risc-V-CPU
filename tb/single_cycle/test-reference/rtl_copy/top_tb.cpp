@@ -3,35 +3,69 @@
 #include "Vtop.h"
 #include "verilated.h"
 
+#ifdef TRACE
+#include "verilated_vcd_c.h"
+#endif
+
+// ---------------------------------------------------------
+// Step one cycle (posedge + negedge)
+// ---------------------------------------------------------
+void step_cycle(Vtop *dut) {
+    // rising edge
+    dut->clk = 1;
+    dut->eval();
+
+    // falling edge
+    dut->clk = 0;
+    dut->eval();
+}
+
 int main(int argc, char **argv)
 {
     Verilated::commandArgs(argc, argv);
     Vtop *dut = new Vtop;
 
+#ifdef TRACE
+    Verilated::traceEverOn(true);
+    VerilatedVcdC *tfp = new VerilatedVcdC;
+    dut->trace(tfp, 99);
+    tfp->open("top.vcd");
+#endif
+
+    // -----------------------------------------------------
+    // Initialize
+    // -----------------------------------------------------
     dut->clk = 0;
     dut->rst = 1;
 
-    // reset for a few cycles
-    for (int i = 0; i < 5; i++)
-    {
-        dut->clk ^= 1;
-        dut->eval();
-    }
+    // Pulse reset for exactly ONE cycle (correct behavior)
+    step_cycle(dut);
 
     dut->rst = 0;
 
-    // run CPU for N cycles
-    for (int cycle = 0; cycle < 50; cycle++)
+    // -----------------------------------------------------
+    // Run CPU
+    // -----------------------------------------------------
+    const int NUM_CYCLES = 40;
+
+    for (int cycle = 0; cycle < NUM_CYCLES; cycle++)
     {
-        for (int i = 0; i < 2; i++)
-        {
-            dut->clk ^= 1;
-            dut->eval();
-        }
-        std::cout << "Cycle " << cycle
-                  << " | a0 = " << dut->a0
-                  << std::endl;
+        step_cycle(dut);
+
+        // Print CPU observable register (x10 = a0)
+        std::cout << "Cycle " << std::setw(3) << cycle
+                  << " | a0 = 0x" << std::hex << std::setw(8)
+                  << std::setfill('0') << dut->a0
+                  << std::dec << std::endl;
+
+#ifdef TRACE
+        tfp->dump(cycle);
+#endif
     }
+
+#ifdef TRACE
+    tfp->close();
+#endif
 
     delete dut;
     return 0;
