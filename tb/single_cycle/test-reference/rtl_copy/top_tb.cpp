@@ -10,7 +10,8 @@
 // ---------------------------------------------------------
 // Step one cycle (posedge + negedge)
 // ---------------------------------------------------------
-void step_cycle(Vtop *dut) {
+void step_cycle(Vtop *dut)
+{
     // rising edge
     dut->clk = 1;
     dut->eval();
@@ -46,7 +47,7 @@ int main(int argc, char **argv)
     // -----------------------------------------------------
     // Run CPU
     // -----------------------------------------------------
-    const int NUM_CYCLES = 40;
+    const int NUM_CYCLES = 200000;
 
     for (int cycle = 0; cycle < NUM_CYCLES; cycle++)
     {
