@@ -1,24 +1,24 @@
 # Zain Asif Statement
 
-- **Overview**
-- **Contribution**
-- **Design Decisions**
-- **Mistakes Made**
-- **What I Could Do Differently**
-- **Reflection**
+- [**Overview**](#overview)
+- [**Contribution**](#contribution)
+- [**Design Decisions**](#special-design-decisions)
+- [**Mistakes Made**](#mistakes-made)
+- [**What I Could Do Differently**](#what-i-could-do-differently)
+- [**Reflection**](#reflection)
 
 ## Overview
 This is an overview of my contribution to RISC-V processor.
 
 ## Contribution
 ### Single Cycle
-- [ALU](#alu-anchor)
-- Regfile
-- Datapath Wiring
+- [ALU](#alu)
+- [Regfile](#regfile)
+- [Datapath](#datapath)
 ### Pipelined
-- Pipeline Registers
-- Forwarding Unit
-- A0 VBuddy Testing
+- [Pipeline Registers](#pipeline-registers)
+- [Forwarding Unit](#forwarding-unit)
+- [A0 VBuddy Testing](#a0-vbuddy-testing)
 
 #### ALU 
 #### Regfile
@@ -32,6 +32,6 @@ This is an overview of my contribution to RISC-V processor.
 
 ## Mistakes Made
 
-## What could do Differently
+## What I Could Do Differently
 
 ## Reflection
