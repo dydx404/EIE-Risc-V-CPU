@@ -22,6 +22,7 @@ module EX_MEM (
     input  logic        memWriteE,
     input  logic [1:0]  resultSrcE,
     input  logic        branchTakenE,
+    input  logic [2:0]  addressingmodeE,
 
     // To MEM stage: data
     output logic [31:0] pcPlus4M,
@@ -35,7 +36,8 @@ module EX_MEM (
     output logic        memReadM,
     output logic        memWriteM,
     output logic [1:0]  resultSrcM,
-    output logic        branchTakenM
+    output logic        branchTakenM,
+    output logic [2:0]  addressingmodeM
 );
 
     always_ff @(posedge clk or posedge rst) begin
@@ -51,6 +53,7 @@ module EX_MEM (
             memWriteM    <= 1'b0;
             resultSrcM   <= 2'b00;
             branchTakenM <= 1'b0;
+            addressingmodeM <= 3'b000;
         end else if (!stall) begin
             pcPlus4M     <= pcPlus4E;
             branchTargetM<= branchTargetE;
@@ -63,6 +66,7 @@ module EX_MEM (
             memWriteM    <= memWriteE;
             resultSrcM   <= resultSrcE;
             branchTakenM <= branchTakenE;
+            addressingmodeM <= addressingmodeE;
         end
     end
 

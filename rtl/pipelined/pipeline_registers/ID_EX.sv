@@ -29,6 +29,7 @@ module ID_EX (
     input  logic        branchD,
     input  logic        jumpD,
     input  logic        jalrD,
+    input  logic [2:0]  addressingmodeD,
 
     // To EX stage: data
     output logic [31:0] pcE,
@@ -49,7 +50,8 @@ module ID_EX (
     output logic [3:0]  aluControlE,
     output logic        branchE,
     output logic        jumpE,
-    output logic        jalrE
+    output logic        jalrE,
+    output logic [2:0]  addressingmodeE
 );
 
     always_ff @(posedge clk or posedge rst) begin
@@ -73,6 +75,7 @@ module ID_EX (
             branchE     <= 1'b0;
             jumpE       <= 1'b0;
             jalrE       <= 1'b0;
+            addressingmodeE <= 3'b000;
         end else if (!stall) begin
             pcE         <= pcD;
             pcPlus4E    <= pcPlus4D;
@@ -92,6 +95,7 @@ module ID_EX (
             branchE     <= branchD;
             jumpE       <= jumpD;
             jalrE       <= jalrD;
+            addressingmodeE <= addressingmodeD;
         end
     end
 
