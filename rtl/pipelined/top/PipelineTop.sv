@@ -18,7 +18,7 @@ module PipelineTop #(
     fetch fetch(
         .clk(clk),
         .rst(rst),
-        .en(),
+        .en(!stallF),
         .branchE(jumpE||branchTakenE),
         .jalrins(jalrE),
         .pc_targetE(branchTargetE),
@@ -39,8 +39,8 @@ module PipelineTop #(
     IF_ID if_id(
         .clk(clk),
         .rst(rst),
-        .stall(),
-        .flush(),
+        .stall(stallD),
+        .flush(flushD),
         .instrF(instrF),
         .pcF(pcF),
         .pcPlus4F(pc_plus4F),
@@ -71,10 +71,10 @@ module PipelineTop #(
 
     Decode decode(
         .instrd(instrD),
-        .regwrite(),
+        .regwrite(regwriteW),
         .CLK(clk),
-        .rdW(),
-        .resultW(),
+        .rdW(rdW),
+        .resultW(resultW),
 
         .addressingmodeD(addressingcontrolD),
         .resultsrcD(resultsrcD),
@@ -115,13 +115,13 @@ module PipelineTop #(
     logic        branchE;
     logic        jumpE;
     logic        jalrE;
-    logic [2:0]  addressingmodeE;//**********************************
+    logic [2:0]  addressingmodeE;
 
     ID_EX id_ex(
         .clk(clk),
         .rst(rst),
-        .stall(),
-        .flush(),
+        .stall(1'b0),
+        .flush(flushE),
         // Data
         .pcD(pcD),
         .pcPlus4D(pc_plus4D),
@@ -140,7 +140,7 @@ module PipelineTop #(
         .branchD(branchD),
         .jumpD(jumpD),
         .jalrD(jalrinstrD),
-        .addressingmodeD(addressingcontrolD),//**********************************
+        .addressingmodeD(addressingcontrolD),
 
         // Outputs to EX stage
         .pcE(pcE),
@@ -159,7 +159,7 @@ module PipelineTop #(
         .branchE(branchE),
         .jumpE(jumpE),
         .jalrE(jalrE),
-        .addressingmodeE(addressingmodeE)//**********************************
+        .addressingmodeE(addressingmodeE)
     );
     //////////////////////////////////////
 
@@ -180,10 +180,10 @@ module PipelineTop #(
         .aluControlE(aluControlE),
         .branchE(branchE),
 
-        .forwardAE(),
-        .forwardBE(),
-        .aluResultM(),
-        .resultW(),
+        .forwardAE(forwardAE),
+        .forwardBE(forwardBE),
+        .aluResultM(aluResultM),
+        .resultW(resultW),
 
         .aluResultE(aluResultE),
         .writeDataE(writeDataE),
@@ -203,13 +203,13 @@ module PipelineTop #(
     logic        memWriteM;
     logic [1:0]  resultSrcM;
     logic        branchTakenM;
-    logic [2:0]  addressingmodeM;//**********************************
+    logic [2:0]  addressingmodeM;
 
     EX_MEM ex_mem(
         .clk(clk),
         .rst(rst),
-        .stall(),
-        .flush(),
+        .stall(1'b0),
+        .flush(1'b0),
         // Data
         .pcPlus4E(pcPlus4E),
         .aluResultE(aluResultE),
@@ -219,7 +219,7 @@ module PipelineTop #(
         .regWriteE(regWriteE),
         .memWriteE(memWriteE),
         .resultSrcE(resultSrcE),
-        .addressingmodeE(addressingmodeE),//**********************************
+        .addressingmodeE(addressingmodeE),
 
         // Outputs to MEM stage
         .pcPlus4M(pcPlus4M),
@@ -229,7 +229,7 @@ module PipelineTop #(
         .regWriteM(regWriteM),
         .memWriteM(memWriteM),
         .resultSrcM(resultSrcM),
-        .addressingmodeM(addressingmodeM)//**********************************
+        .addressingmodeM(addressingmodeM)
     );
     //////////////////////////////////////
 
@@ -264,8 +264,8 @@ module PipelineTop #(
     MEM_WB mem_wb(
         .clk(clk),
         .rst(rst),
-        .stall(),
-        .flush(),
+        .stall(1'b0),
+        .flush(1'b0),
         // Data
         .readDataM(readDataM),
         .aluResultM(aluResultM),
@@ -299,5 +299,34 @@ module PipelineTop #(
     );
     //////////////////////////////////////
 
+    // Hazard Unit
+    //////////////////////////////////////
+    logic [1:0]  forwardAE;
+    logic [1:0]  forwardBE;
+    logic        stallF;
+    logic        stallD;
+    logic        flushD;
+    logic        flushE;
+
+    HazardUnit hazard_unit(
+        .rs1D(rs1D),
+        .rs2D(rs2D),
+        .rs1E(rs1E),
+        .rs2E(rs2E),
+        .rdE(rdE),
+        .rdM(rdM),
+        .rdW(rdW),
+        .regWriteM(regWriteM),
+        .regWriteW(regWriteW),
+        .pcsrcE(branchTakenE||jumpE),
+
+        .forwardAE(forwardAE),
+        .forwardBE(forwardBE),
+        .stallF(stallF),
+        .stallD(stallD),
+        .flushD(flushD),
+        .flushE(flushE)
+    );
+    //////////////////////////////////////
 
 endmodule
