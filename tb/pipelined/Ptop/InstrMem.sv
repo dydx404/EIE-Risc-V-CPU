@@ -1,19 +1,22 @@
-module InstrMem(
-    input   logic [31:0]        addr,
-    output  logic [31:0]        instrF
+module InstrMem (
+    input   logic [31:0] addr,
+    output  logic [31:0] instrF
 );
-    // Memory Declaration
-    logic [7:0] memory [32'hbfc00fff:32'hbfc00000];
 
-    // Initialize Instruction Memory (replace with $readmemh if needed)
+    // 256 words of instruction memory (1 KB)
+    logic [31:0] memory [0:255];
+
     initial begin
-        // Add more instructions as needed
         $readmemh("program.mem", memory);
-        $display("[InstrMem] memory[0] = %h", memory[32'hbfc00000]);
-        $display("[InstrMem] memory[1] = %h", memory[32'hbfc00001]);
-        $display("[InstrMem] memory[2] = %h", memory[32'hbfc00002]);
+
+        // Debug dump
+        $display("[InstrMem] word[0] = %h", memory[0]);
+        $display("[InstrMem] word[1] = %h", memory[1]);
+        $display("[InstrMem] word[2] = %h", memory[2]);
+        $display("[InstrMem] word[3] = %h", memory[3]);
     end
 
-    // Read Instruction
-    assign instrF = {memory[addr[11:0]], memory[addr[11:0]+1], memory[addr[11:0]+2], memory[addr[11:0]+3]}; // Word-aligned address, able to load byte
+    // ✅ Word-aligned access: PC / 4
+    assign instrF = memory[addr[31:2]];
+
 endmodule

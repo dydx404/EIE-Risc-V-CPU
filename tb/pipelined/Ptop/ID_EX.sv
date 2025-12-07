@@ -5,6 +5,8 @@ module ID_EX (
     input  logic        clk,
     input  logic        rst,
 
+    input logic memReadD,
+
     // Hazard control
     input  logic        stall,
     input  logic        flush,
@@ -49,7 +51,9 @@ module ID_EX (
     output logic        branchE,
     output logic        jumpE,
     output logic        jalrE,
-    output logic [2:0]  addressingmodeE
+    output logic [2:0]  addressingmodeE,
+
+    output logic        memReadE
 );
 
     always_ff @(posedge clk or posedge rst) begin
@@ -73,6 +77,8 @@ module ID_EX (
             jumpE       <= 1'b0;
             jalrE       <= 1'b0;
             addressingmodeE <= 3'b000;
+            memReadE <= 1'b0;
+
         end else if (!stall) begin
             pcE         <= pcD;
             pcPlus4E    <= pcPlus4D;
@@ -92,6 +98,8 @@ module ID_EX (
             jumpE       <= jumpD;
             jalrE       <= jalrD;
             addressingmodeE <= addressingmodeD;
+            memReadE <= memReadD;
+
         end
     end
 

@@ -48,17 +48,20 @@ int main(int argc, char **argv)
     // -----------------------------------------------------
     // Run CPU
     // -----------------------------------------------------
-    const int NUM_CYCLES = 800000;
+    const int NUM_CYCLES = 10;
 
     for (int cycle = 0; cycle < NUM_CYCLES; cycle++)
     {
         step_cycle(dut);
 
         // Print CPU observable register (x10 = a0)
-        std::cout << "Cycle " << std::setw(3) << cycle
-                  << " | TestReg = 0x" << std::hex << std::setw(8)
-                  << std::setfill('0') << dut->regdata
-                  << std::dec << std::endl;
+        std::cout
+        << "Cycle " << cycle
+        << " | PC = 0x" << std::hex << dut->pc_out
+        << " | a0 = 0x" << dut->regdata
+        << " | ResultW = 0x" << dut->ResultW
+        << std::dec << std::endl;
+
 
 #ifdef TRACE
         tfp->dump(cycle);

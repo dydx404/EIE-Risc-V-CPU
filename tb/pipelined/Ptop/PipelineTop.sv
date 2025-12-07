@@ -6,7 +6,8 @@ module PipelineTop #(
     input   logic                       rst,
     input   logic [REG_ADDR_WIDTH-1:0]  regaddr,  // For testing purposes
     output  logic [DATA_WIDTH-1:0]      regdata,  // For testing purposes
-    output  logic [DATA_WIDTH-1:0]      ResultW
+    output  logic [DATA_WIDTH-1:0]      ResultW,
+    output logic [31:0] pc_out
 );
 
     // IF Stage
@@ -69,17 +70,22 @@ module PipelineTop #(
     logic                  branchD;
     logic                  jalrinstrD;
 
+
+    logic memReadD;
+    logic memReadE;
+
     Decode decode(
         .instrd(instrD),
         .regwrite(regWriteW),
         .CLK(clk),
         .rdW(rdW),
-        .resultW(resultW),
+        .resultW(ResultW),
 
         .addressingmodeD(addressingcontrolD),
         .resultsrcD(resultsrcD),
         .regwriteD(regwriteD),
         .memwriteD(memwriteD),
+        .memReadD(memReadD),
         .branchD(branchD),
         .jumpD(jumpD),
         .jalrD(jalrinstrD),
@@ -134,6 +140,7 @@ module PipelineTop #(
         // Control
         .regWriteD(regwriteD),
         .memWriteD(memwriteD),
+        .memReadD(memReadD),
         .resultSrcD(resultsrcD),
         .aluSrcD(alusrcD),
         .aluControlD(alucontrolD),
@@ -153,6 +160,7 @@ module PipelineTop #(
         .rdE(rdE),
         .regWriteE(regWriteE),
         .memWriteE(memWriteE),
+        .memReadE(memReadE),
         .resultSrcE(resultSrcE),
         .aluSrcE(aluSrcE),
         .aluControlE(aluControlE),
@@ -183,7 +191,7 @@ module PipelineTop #(
         .forwardAE(forwardAE),
         .forwardBE(forwardBE),
         .aluResultM(aluResultM),
-        .resultW(resultW),
+        .resultW(ResultW),
 
         .aluResultE(aluResultE),
         .writeDataE(writeDataE),
@@ -288,7 +296,7 @@ module PipelineTop #(
 
     // WB Stage
     //////////////////////////////////////
-    logic [31:0] resultW;
+    
 
     WB_STAGE wb_stage(
         .readDataW(readDataW),
@@ -296,7 +304,7 @@ module PipelineTop #(
         .pcPlus4W(pcPlus4W),
         .resultSrcW(resultSrcW),
 
-        .resultW(resultW)
+        .resultW(ResultW)
     );
     //////////////////////////////////////
 
@@ -319,7 +327,7 @@ module PipelineTop #(
         .rdW(rdW),
         .regWriteM(regWriteM),
         .regWriteW(regWriteW),
-        .regWriteE(regWriteE),
+        .memReadE(memReadE),
         .pcsrcE(branchTakenE||jumpE),
 
         .forwardAE(forwardAE),
@@ -330,5 +338,63 @@ module PipelineTop #(
         .flushE(flushE)
     );
     //////////////////////////////////////
+
+
+    always_ff @(posedge clk) begin
+    if (!rst) begin
+        $display("[IF ] PC = %h | instrF = %h", pcF, instrF);
+    end
+end
+   always_ff @(posedge clk) begin
+    if (!rst) begin
+        $display("[ID ] rs1=%0d rs2=%0d rd=%0d | regW=%b memW=%b aluSrc=%b aluCtrl=%b",
+            rs1D, rs2D, rdD,
+            regwriteD, memwriteD,
+            alusrcD, alucontrolD
+        );
+    end
+end
+   always_ff @(posedge clk) begin
+    if (!rst) begin
+        $display("[EX ] A=%h B=%h | ALU=%h | branchTaken=%b",
+            rd1E, rd2E,
+            aluResultE,
+            branchTakenE
+        );
+    end
+end
+   always_ff @(posedge clk) begin
+    if (!rst) begin
+        $display("[MEM] addr=%h writeData=%h memW=%b memR=%b readData=%h",
+            aluResultM,
+            writeDataM,
+            memWriteM,
+            (resultSrcM==2'b01),
+            readDataM
+        );
+    end
+end
+   always_ff @(posedge clk) begin
+    if (!rst && regWriteW) begin
+        $display("[WB ] rd=%0d data=%h src=%b",
+            rdW, ResultW, resultSrcW
+        );
+    end
+end
+always_ff @(posedge clk) begin
+    if (!rst) begin
+        $display("[HZ ] stallF=%b stallD=%b flushD=%b flushE=%b | rs1D=%0d rs2D=%0d rdE=%0d memReadE=%b",
+                 stallF, stallD, flushD, flushE,
+                 rs1D, rs2D, rdE, memReadE);
+    end
+end
+
+
+
+
+
+
+
+
 
 endmodule
