@@ -7,7 +7,11 @@ module PipelineTop #(
     input   logic [REG_ADDR_WIDTH-1:0]  regaddr,  // For testing purposes
     output  logic [DATA_WIDTH-1:0]      regdata,  // For testing purposes
     output  logic [DATA_WIDTH-1:0]      ResultW,
-    output logic [31:0] pc_out
+    output logic [31:0]                 pc_out,
+    output  logic [4:0]                 rdW_out,
+    output  logic                       regWriteW_out
+
+
 );
 
     // IF Stage
@@ -96,10 +100,13 @@ module PipelineTop #(
         .rs1D(rs1D),
         .rs2D(rs2D),
         .rdD(rdD),
-        .extimmD(extimmD)
+        .extimmD(extimmD),
+
+        //debug connection
+        .testRegAddress(regaddr),
+        .testRegData(regdata)
     );
     //////////////////////////////////////
-
     // ID to EX
     //////////////////////////////////////
     // To EX stage: data
@@ -308,7 +315,10 @@ module PipelineTop #(
     );
     //////////////////////////////////////
 
-    // Hazard Unit
+    assign rdW_out       = rdW;
+    assign regWriteW_out = regWriteW;
+
+     // Hazard Unit
     //////////////////////////////////////
     logic [1:0]  forwardAE;
     logic [1:0]  forwardBE;
@@ -337,9 +347,12 @@ module PipelineTop #(
         .flushD(flushD),
         .flushE(flushE)
     );
+
+    assign pc_out = pcF;
+
     //////////////////////////////////////
 
-
+/*
     always_ff @(posedge clk) begin
     if (!rst) begin
         $display("[IF ] PC = %h | instrF = %h", pcF, instrF);
@@ -388,9 +401,7 @@ always_ff @(posedge clk) begin
                  rs1D, rs2D, rdE, memReadE);
     end
 end
-
-
-
+*/
 
 
 

@@ -54,13 +54,16 @@ int main(int argc, char **argv)
     {
         step_cycle(dut);
 
-        // Print CPU observable register (x10 = a0)
-        std::cout
-        << "Cycle " << cycle
-        << " | PC = 0x" << std::hex << dut->pc_out
-        << " | a0 = 0x" << dut->regdata
-        << " | ResultW = 0x" << dut->ResultW
-        << std::dec << std::endl;
+        dut->regaddr = 10; // x10 = a0
+
+
+std::cout
+<< "Cycle " << cycle
+<< " | PC=0x" << std::hex << dut->pc_out
+<< " | regData=0x" << dut->regdata
+<< " | ResultW=0x" << dut->ResultW
+<< std::dec << std::endl;
+
 
 
 #ifdef TRACE

@@ -20,7 +20,10 @@ module Decode(
     output  logic [4:0]  rs1D,
     output  logic [4:0]  rs2D,
     output  logic [4:0]  rdD,
-    output  logic [31:0] extimmD
+    output  logic [31:0] extimmD,
+
+    input logic[4:0] testRegAddress,
+    output logic[31:0] testRegData
     
 );
 
@@ -68,8 +71,8 @@ module Decode(
         .rd2(rd2),
 
         // tie off debug ports
-        .testRegAddress(5'b0),
-        .testRegData()
+        .testRegAddress(testRegAddress),
+        .testRegData(testRegData)
     );
 
     // ----------------------------
