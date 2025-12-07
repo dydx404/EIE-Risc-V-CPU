@@ -29,7 +29,7 @@ int main(int argc, char **argv) {
     }
     top->rst = 0;
 
-    const int MAX_CYCLES = 5000;   // give the program plenty of time
+    const int MAX_CYCLES = 5000;
 
     for (int i = 0; i < MAX_CYCLES; i++) {
         // full clock cycle
@@ -41,20 +41,23 @@ int main(int argc, char **argv) {
 
         int a0 = (int)top->a0;
 
-        // show lower 16 bits of a0 on Vbuddy
-        vbdHex(4, (a0 >> 12) & 0xF);
-        vbdHex(3, (a0 >>  8) & 0xF);
-        vbdHex(2, (a0 >>  4) & 0xF);
-        vbdHex(1,  a0        & 0xF);
+        // old: hex display
+        // vbdHex(4, (a0 >> 12) & 0xF);
+        // vbdHex(3, (a0 >>  8) & 0xF);
+        // vbdHex(2, (a0 >>  4) & 0xF);
+        // vbdHex(1,  a0        & 0xF);
+
+        // new: waveform plot of a0
+        // clamp to 0–255 so it fits on the graph
+        vbdPlot(a0 & 0xFF, 0, 255);
 
         vbdCycle(i + 1);
 
-        // optional: print every 1000 cycles for sanity
         if ((i % 1000) == 0) {
             printf("cycle %5d  a0 = 0x%08x\n", i, a0);
         }
 
-        // allow manual stop from Vbuddy button
+        // stop if button pressed
         if (vbdFlag()) break;
     }
 
