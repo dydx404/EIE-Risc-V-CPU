@@ -1,61 +1,78 @@
 module PipelineTop #(
-    DATA_WIDTH = 32,
-    REG_ADDR_WIDTH = 5
+    parameter DATA_WIDTH     = 32,
+    parameter REG_ADDR_WIDTH = 5
 )(
-    input   logic                       clk,
-    input   logic                       rst,
-    input   logic [REG_ADDR_WIDTH-1:0]  regaddr,  // For testing purposes
-    output  logic [DATA_WIDTH-1:0]      regdata,  // For testing purposes
-    output  logic [DATA_WIDTH-1:0]      ResultW
+    input  logic                       clk,
+    input  logic                       rst,
+    input  logic [REG_ADDR_WIDTH-1:0]  regaddr,  // (currently unused)
+    output logic [DATA_WIDTH-1:0]      regdata,  // (currently unused)
+    output logic [DATA_WIDTH-1:0]      ResultW
 );
 
-    // IF Stage
-    //////////////////////////////////////
+    // =========================================================
+    // IF STAGE
+    // =========================================================
     logic [DATA_WIDTH-1:0] instrF;
     logic [DATA_WIDTH-1:0] pcF;
     logic [DATA_WIDTH-1:0] pc_plus4F;
 
-    fetch fetch(
-        .clk(clk),
-        .rst(rst),
-        .en(!stallF),
-        .branchE(jumpE||branchTakenE),
-        .jalrins(jalrE),
-        .pc_targetE(branchTargetE),
-        .alu_outE(aluResultE),
-    
-        .instrF(instrF),
-        .pcF(pcF),
-        .pc_plus4F(pc_plus4F)
-    );
-    //////////////////////////////////////
+    // Hazard control
+    logic        stallF;
+    logic        stallD;
+    logic        flushD;
+    logic        flushE;
 
-    // IF tp ID
-    //////////////////////////////////////
+    // From EX / control flow
+    logic [31:0] branchTargetE;
+    logic [31:0] aluResultE;
+    logic        branchTakenE;
+    logic        jumpE;
+    logic        jalrE;
+
+    fetch fetch_i (
+        .clk        (clk),
+        .rst        (rst),
+        .en         (!stallF),
+
+        .branchE    (jumpE || branchTakenE),
+        .jalrins    (jalrE),
+        .pc_targetE (branchTargetE),
+        .alu_outE   (aluResultE),
+
+        .instrF     (instrF),
+        .pcF        (pcF),
+        .pc_plus4F  (pc_plus4F)
+    );
+
+    // =========================================================
+    // IF → ID
+    // =========================================================
     logic [DATA_WIDTH-1:0] instrD;
     logic [DATA_WIDTH-1:0] pcD;
     logic [DATA_WIDTH-1:0] pc_plus4D;
 
-    IF_ID if_id(
-        .clk(clk),
-        .rst(rst),
-        .stall(stallD),
-        .flush(flushD),
-        .instrF(instrF),
-        .pcF(pcF),
-        .pcPlus4F(pc_plus4F),
+    IF_ID if_id_i (
+        .clk      (clk),
+        .rst      (rst),
+        .stall    (stallD),
+        .flush    (flushD),
 
-        .instrD(instrD),
-        .pcD(pcD),
-        .pcPlus4D(pc_plus4D)
+        .pcF      (pcF),
+        .pcPlus4F (pc_plus4F),
+        .instrF   (instrF),
+
+        .pcD      (pcD),
+        .pcPlus4D (pc_plus4D),
+        .instrD   (instrD)
     );
-    //////////////////////////////////////
 
-    // ID Stage
-    //////////////////////////////////////
+    // =========================================================
+    // ID STAGE
+    // =========================================================
     logic                  regwriteD;
     logic [1:0]            resultsrcD;
     logic                  memwriteD;
+    logic                  memReadD;           // NEW: load flag at D
     logic [3:0]            alucontrolD;
     logic                  alusrcD;
     logic [DATA_WIDTH-1:0] rd1D;
@@ -69,34 +86,39 @@ module PipelineTop #(
     logic                  branchD;
     logic                  jalrinstrD;
 
-    Decode decode(
-        .instrd(instrD),
-        .regwrite(regwriteW),
-        .CLK(clk),
-        .rdW(rdW),
-        .resultW(resultW),
+    // WB stage outputs (defined later but used as inputs here)
+    logic [DATA_WIDTH-1:0] resultW;
+    logic                  regWriteW;
+    logic [4:0]            rdW;
+
+    Decode decode_i (
+        .instrd         (instrD),
+        .regwrite       (regWriteW),
+        .CLK            (clk),
+        .rdW            (rdW),
+        .resultW        (resultW),
 
         .addressingmodeD(addressingcontrolD),
-        .resultsrcD(resultsrcD),
-        .regwriteD(regwriteD),
-        .memwriteD(memwriteD),
-        .branchD(branchD),
-        .jumpD(jumpD),
-        .jalrD(jalrinstrD),
-        .alucontrolD(alucontrolD),
-        .alusrcD(alusrcD),
-        .rd1(rd1D),
-        .rd2(rd2D),
-        .rs1D(rs1D),
-        .rs2D(rs2D),
-        .rdD(rdD),
-        .extimmD(extimmD)
+        .resultsrcD     (resultsrcD),
+        .regwriteD      (regwriteD),
+        .memwriteD      (memwriteD),
+        .memReadD       (memReadD),        // NEW
+        .branchD        (branchD),
+        .jumpD          (jumpD),
+        .jalrD          (jalrinstrD),
+        .alucontrolD    (alucontrolD),
+        .alusrcD        (alusrcD),
+        .rd1            (rd1D),
+        .rd2            (rd2D),
+        .rs1D           (rs1D),
+        .rs2D           (rs2D),
+        .rdD            (rdD),
+        .extimmD        (extimmD)
     );
-    //////////////////////////////////////
 
-    // ID to EX
-    //////////////////////////////////////
-    // To EX stage: data
+    // =========================================================
+    // ID → EX
+    // =========================================================
     logic [31:0] pcE;
     logic [31:0] pcPlus4E;
     logic [31:0] rd1E;
@@ -106,227 +128,251 @@ module PipelineTop #(
     logic [4:0]  rs2E;
     logic [4:0]  rdE;
 
-    // To EX stage: control
     logic        regWriteE;
+    logic        memReadE;          // NEW: in EX
     logic        memWriteE;
     logic [1:0]  resultSrcE;
     logic        aluSrcE;
     logic [3:0]  aluControlE;
     logic        branchE;
-    logic        jumpE;
-    logic        jalrE;
+    logic        jumpE_int;
+    logic        jalrE_int;
     logic [2:0]  addressingmodeE;
 
-    ID_EX id_ex(
-        .clk(clk),
-        .rst(rst),
-        .stall(1'b0),
-        .flush(flushE),
+    ID_EX id_ex_i (
+        .clk            (clk),
+        .rst            (rst),
+        .stall          (1'b0),     // stall via IF/ID + flushE (hazard unit)
+        .flush          (flushE),
+
         // Data
-        .pcD(pcD),
-        .pcPlus4D(pc_plus4D),
-        .rd1D(rd1D),
-        .rd2D(rd2D),
-        .immExtD(extimmD),
-        .rs1D(rs1D),
-        .rs2D(rs2D),
-        .rdD(rdD),
+        .pcD            (pcD),
+        .pcPlus4D       (pc_plus4D),
+        .rd1D           (rd1D),
+        .rd2D           (rd2D),
+        .immExtD        (extimmD),
+        .rs1D           (rs1D),
+        .rs2D           (rs2D),
+        .rdD            (rdD),
+
         // Control
-        .regWriteD(regwriteD),
-        .memWriteD(memwriteD),
-        .resultSrcD(resultsrcD),
-        .aluSrcD(alusrcD),
-        .aluControlD(alucontrolD),
-        .branchD(branchD),
-        .jumpD(jumpD),
-        .jalrD(jalrinstrD),
+        .regWriteD      (regwriteD),
+        .memReadD       (memReadD),
+        .memWriteD      (memwriteD),
+        .resultSrcD     (resultsrcD),
+        .aluSrcD        (alusrcD),
+        .aluControlD    (alucontrolD),
+        .branchD        (branchD),
+        .jumpD          (jumpD),
+        .jalrD          (jalrinstrD),
         .addressingmodeD(addressingcontrolD),
 
-        // Outputs to EX stage
-        .pcE(pcE),
-        .pcPlus4E(pcPlus4E),
-        .rd1E(rd1E),
-        .rd2E(rd2E),
-        .immExtE(immExtE),
-        .rs1E(rs1E),
-        .rs2E(rs2E),
-        .rdE(rdE),
-        .regWriteE(regWriteE),
-        .memWriteE(memWriteE),
-        .resultSrcE(resultSrcE),
-        .aluSrcE(aluSrcE),
-        .aluControlE(aluControlE),
-        .branchE(branchE),
-        .jumpE(jumpE),
-        .jalrE(jalrE),
+        // To EX
+        .pcE            (pcE),
+        .pcPlus4E       (pcPlus4E),
+        .rd1E           (rd1E),
+        .rd2E           (rd2E),
+        .immExtE        (immExtE),
+        .rs1E           (rs1E),
+        .rs2E           (rs2E),
+        .rdE            (rdE),
+
+        .regWriteE      (regWriteE),
+        .memReadE       (memReadE),     // NEW: now valid at EX
+        .memWriteE      (memWriteE),
+        .resultSrcE     (resultSrcE),
+        .aluSrcE        (aluSrcE),
+        .aluControlE    (aluControlE),
+        .branchE        (branchE),
+        .jumpE          (jumpE_int),
+        .jalrE          (jalrE_int),
         .addressingmodeE(addressingmodeE)
     );
-    //////////////////////////////////////
 
-    // EX Stage
-    //////////////////////////////////////
-    logic [31:0] aluResultE;
-    logic [31:0] writeDataE;    // store data (forwarded rs2)
-    logic [31:0] branchTargetE; // PC + immediate
-    logic        branchTakenE;   // final branch decision
+    assign jumpE = jumpE_int;
+    assign jalrE = jalrE_int;
 
-    EXECUTE_STAGE execute_stage(
-        .pcE(pcE),
-        .rd1E(rd1E),
-        .rd2E(rd2E),
-        .extImmE(immExtE),
+    // =========================================================
+    // EX STAGE
+    // =========================================================
+    logic [31:0] writeDataE;
 
-        .aluSrcE(aluSrcE),
-        .aluControlE(aluControlE),
-        .branchE(branchE),
+    logic [1:0] forwardAE;
+    logic [1:0] forwardBE;
 
-        .forwardAE(forwardAE),
-        .forwardBE(forwardBE),
-        .aluResultM(aluResultM),
-        .resultW(resultW),
+    logic [31:0] aluResultM;   // from MEM (for forwarding)
+    // resultW already defined
 
-        .aluResultE(aluResultE),
-        .writeDataE(writeDataE),
-        .branchTargetE(branchTargetE),
-        .branchTakenE(branchTakenE)
+    EXECUTE_STAGE execute_stage_i (
+        .clk             (clk),
+        .rst             (rst),
+
+        .pcE             (pcE),
+        .rd1E            (rd1E),
+        .rd2E            (rd2E),
+        .extImmE         (immExtE),
+        .rdE             (rdE),
+
+        .aluControlE     (aluControlE),
+        .aluSrcE         (aluSrcE),
+        .branchE         (branchE),
+        .regWriteE       (regWriteE),
+        .memReadE        (memReadE),
+        .memWriteE       (memWriteE),
+        .resultSrcE      (resultSrcE),
+        .addressingModeE (addressingmodeE),
+
+        .forwardAE       (forwardAE),
+        .forwardBE       (forwardBE),
+        .aluResultM      (aluResultM),
+        .resultW         (resultW),
+
+        .aluResultE      (aluResultE),
+        .writeDataE      (writeDataE),
+        .branchTargetE   (branchTargetE),
+        .branchTakenE    (branchTakenE)
     );
-    //////////////////////////////////////
 
-    // EX to MEM
-    //////////////////////////////////////
+    // =========================================================
+    // EX → MEM
+    // =========================================================
     logic [31:0] pcPlus4M;
-    logic [31:0] aluResultM;
     logic [31:0] writeDataM;
     logic [4:0]  rdM;
 
     logic        regWriteM;
+    logic        memReadM;
     logic        memWriteM;
     logic [1:0]  resultSrcM;
-    logic        branchTakenM;
     logic [2:0]  addressingmodeM;
 
-    EX_MEM ex_mem(
-        .clk(clk),
-        .rst(rst),
-        .stall(1'b0),
-        .flush(1'b0),
+    EX_MEM ex_mem_i (
+        .clk            (clk),
+        .rst            (rst),
+        .stall          (1'b0),
+        .flush          (1'b0),
+
         // Data
-        .pcPlus4E(pcPlus4E),
-        .aluResultE(aluResultE),
-        .writeDataE(writeDataE),
-        .rdE(rdE),
+        .pcPlus4E       (pcPlus4E),
+        .branchTargetE  (branchTargetE),
+        .aluResultE     (aluResultE),
+        .writeDataE     (writeDataE),
+        .rdE            (rdE),
+
         // Control
-        .regWriteE(regWriteE),
-        .memWriteE(memWriteE),
-        .resultSrcE(resultSrcE),
+        .regWriteE      (regWriteE),
+        .memReadE       (memReadE),
+        .memWriteE      (memWriteE),
+        .resultSrcE     (resultSrcE),
+        .branchTakenE   (branchTakenE),
         .addressingmodeE(addressingmodeE),
 
-        // Outputs to MEM stage
-        .pcPlus4M(pcPlus4M),
-        .aluResultM(aluResultM),
-        .writeDataM(writeDataM),
-        .rdM(rdM),
-        .regWriteM(regWriteM),
-        .memWriteM(memWriteM),
-        .resultSrcM(resultSrcM),
+        // To MEM
+        .pcPlus4M       (pcPlus4M),
+        .branchTargetM  (),            // optional
+        .aluResultM     (aluResultM),
+        .writeDataM     (writeDataM),
+        .rdM            (rdM),
+
+        .regWriteM      (regWriteM),
+        .memReadM       (memReadM),
+        .memWriteM      (memWriteM),
+        .resultSrcM     (resultSrcM),
+        .branchTakenM   (),            // optional
         .addressingmodeM(addressingmodeM)
     );
-    //////////////////////////////////////
 
-    // MEM Stage
-    //////////////////////////////////////
+    // =========================================================
+    // MEM STAGE
+    // =========================================================
     logic [31:0] readDataM;
 
-    MEM_STAGE mem_stage(
-        .clk(clk),
-        .aluResultM(aluResultM),
-        .writeDataM(writeDataM),
-        .memWriteM(memWriteM),
-        .memReadM(resultSrcM==2'b01),
-        .addressingModeM(addressingmodeM),
+    MEM_STAGE mem_stage_i (
+        .clk             (clk),
+        .rst             (rst),
+        .aluResultM      (aluResultM),
+        .writeDataM      (writeDataM),
+        .memReadM        (memReadM),
+        .memWriteM       (memWriteM),
+        .addressingModeM (addressingmodeM),
 
-        .readDataM(readDataM)
+        .readDataM       (readDataM)
     );
-    //////////////////////////////////////
 
-    // MEM to WB
-    //////////////////////////////////////
-    // To WB stage: data
+    // =========================================================
+    // MEM → WB
+    // =========================================================
     logic [31:0] readDataW;
     logic [31:0] aluResultW;
     logic [31:0] pcPlus4W;
-    logic [4:0]  rdW;
 
-    // To WB stage: control
-    logic        regWriteW;
     logic [1:0]  resultSrcW;
 
-    MEM_WB mem_wb(
-        .clk(clk),
-        .rst(rst),
-        .stall(1'b0),
-        .flush(1'b0),
-        // Data
-        .readDataM(readDataM),
-        .aluResultM(aluResultM),
-        .pcPlus4M(pcPlus4M),
-        .rdM(rdM),
-        // Control
-        .regWriteM(regWriteM),
-        .resultSrcM(resultSrcM),
+    MEM_WB mem_wb_i (
+        .clk        (clk),
+        .rst        (rst),
+        .stall      (1'b0),
+        .flush      (1'b0),
 
-        // Outputs to WB stage
-        .readDataW(readDataW),
-        .aluResultW(aluResultW),
-        .pcPlus4W(pcPlus4W),
-        .rdW(rdW),
-        .regWriteW(regWriteW),
-        .resultSrcW(resultSrcW)
+        .readDataM  (readDataM),
+        .aluResultM (aluResultM),
+        .pcPlus4M   (pcPlus4M),
+        .rdM        (rdM),
+
+        .regWriteM  (regWriteM),
+        .resultSrcM (resultSrcM),
+
+        .readDataW  (readDataW),
+        .aluResultW (aluResultW),
+        .pcPlus4W   (pcPlus4W),
+        .rdW        (rdW),
+
+        .regWriteW  (regWriteW),
+        .resultSrcW (resultSrcW)
     );
-    //////////////////////////////////////
 
-    // WB Stage
-    //////////////////////////////////////
-    logic [31:0] resultW;
+    // =========================================================
+    // WB STAGE
+    // =========================================================
+    WB_STAGE wb_stage_i (
+        .readDataW  (readDataW),
+        .aluResultW (aluResultW),
+        .pcPlus4W   (pcPlus4W),
+        .resultSrcW (resultSrcW),
 
-    WB_STAGE wb_stage(
-        .readDataW(readDataW),
-        .aluResultW(aluResultW),
-        .pcPlus4W(pcPlus4W),
-        .resultSrcW(resultSrcW),
-
-        .resultW(resultW)
+        .resultW    (resultW)
     );
-    //////////////////////////////////////
 
-    // Hazard Unit
-    //////////////////////////////////////
-    logic [1:0]  forwardAE;
-    logic [1:0]  forwardBE;
-    logic        stallF;
-    logic        stallD;
-    logic        flushD;
-    logic        flushE;
+    // =========================================================
+    // HAZARD UNIT
+    // =========================================================
+    HazardUnit hazard_unit_i (
+        .rs1E      (rs1E),
+        .rs2E      (rs2E),
+        .rs1D      (rs1D),
+        .rs2D      (rs2D),
+        .rdE       (rdE),
+        .rdM       (rdM),
+        .rdW       (rdW),
 
-    HazardUnit hazard_unit(
-        .rs1D(rs1D),
-        .rs2D(rs2D),
-        .rs1E(rs1E),
-        .rs2E(rs2E),
-        .rdE(rdE),
-        .rdM(rdM),
-        .rdW(rdW),
-        .regWriteM(regWriteM),
-        .regWriteW(regWriteW),
-        .pcsrcE(branchTakenE||jumpE),
+        .regWriteM (regWriteM),
+        .regWriteW (regWriteW),
 
-        .forwardAE(forwardAE),
-        .forwardBE(forwardBE),
-        .stallF(stallF),
-        .stallD(stallD),
-        .flushD(flushD),
-        .flushE(flushE)
+        .memReadE  (memReadE),                     // true load-use info
+        .pcsrcE    (branchTakenE || jumpE || jalrE),
+
+        .forwardAE (forwardAE),
+        .forwardBE (forwardBE),
+        .stallF    (stallF),
+        .stallD    (stallD),
+        .flushD    (flushD),
+        .flushE    (flushE)
     );
-    //////////////////////////////////////
+
+    // =========================================================
+    // Top-level outputs
+    // =========================================================
+    assign ResultW = resultW;
+    assign regdata = '0;   // hook to RegFile debug later if needed
 
 endmodule
