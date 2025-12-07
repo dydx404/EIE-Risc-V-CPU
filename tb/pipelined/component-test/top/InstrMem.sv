@@ -13,3 +13,5 @@ module InstrMem(
     // Read Instruction
     assign instrF = {memory[addr[11:0]], memory[addr[11:0]+1], memory[addr[11:0]+2], memory[addr[11:0]+3]}; // Word-aligned address, able to load byte
 endmodule
+
+
