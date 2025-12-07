@@ -9,6 +9,7 @@ module Decode(
     output  logic [1:0]  resultsrcD,
     output  logic        regwriteD,
     output  logic        memwriteD,
+    output  logic        memReadD,
     output  logic        branchD,
     output  logic        jumpD,
     output  logic        jalrD,
@@ -20,13 +21,18 @@ module Decode(
     output  logic [4:0]  rs2D,
     output  logic [4:0]  rdD,
     output  logic [31:0] extimmD
+    
 );
 
     logic [2:0] immsrc;
 
+
     assign rdD  = instrd[11:7];
     assign rs1D = instrd[19:15];
     assign rs2D = instrd[24:20];
+
+    assign memReadD = (resultsrcD == 2'b01);
+
 
     // ----------------------------
     // Control Unit (FIXED funct7)

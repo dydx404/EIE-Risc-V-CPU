@@ -56,6 +56,7 @@ TEST(DecodeStage, RTypeADDDecode) {
 
     EXPECT_EQ(dut->regwriteD, 1);
     EXPECT_EQ(dut->memwriteD, 0);
+    EXPECT_EQ(dut->memReadD,  0);   // ✅ NEW
     EXPECT_EQ(dut->branchD,   0);
     EXPECT_EQ(dut->jumpD,     0);
 
@@ -78,11 +79,11 @@ TEST(DecodeStage, LoadLWDecode) {
 
     EXPECT_EQ(dut->regwriteD, 1);
     EXPECT_EQ(dut->memwriteD, 0);
+    EXPECT_EQ(dut->memReadD,  1);   // ✅ NEW (CRITICAL)
     EXPECT_EQ(dut->resultsrcD, 1);
     EXPECT_EQ(dut->alusrcD, 1);
     EXPECT_EQ(dut->extimmD, 12);
 }
-
 
 TEST(DecodeStage, StoreSWDecode) {
     // sw x5, 8(x3)
@@ -94,6 +95,7 @@ TEST(DecodeStage, StoreSWDecode) {
 
     EXPECT_EQ(dut->regwriteD, 0);
     EXPECT_EQ(dut->memwriteD, 1);
+    EXPECT_EQ(dut->memReadD,  0);   // ✅ NEW
     EXPECT_EQ(dut->alusrcD,   1);
     EXPECT_EQ(dut->extimmD,   8);
 }
@@ -106,6 +108,7 @@ TEST(DecodeStage, BranchBEQDecode) {
     EXPECT_EQ(dut->branchD, 1);
     EXPECT_EQ(dut->jumpD,   0);
     EXPECT_EQ(dut->jalrD,   0);
+    EXPECT_EQ(dut->memReadD, 0);   // ✅ NEW
     EXPECT_EQ(dut->alucontrolD, 0b0001); // SUB
 }
 
@@ -118,6 +121,7 @@ TEST(DecodeStage, JALDecode) {
     EXPECT_EQ(dut->jalrD, 0);
     EXPECT_EQ(dut->resultsrcD, 2);
     EXPECT_EQ(dut->regwriteD, 1);
+    EXPECT_EQ(dut->memReadD,  0);   // ✅ NEW
 }
 
 TEST(DecodeStage, JALRDecode) {
@@ -129,6 +133,7 @@ TEST(DecodeStage, JALRDecode) {
     EXPECT_EQ(dut->jalrD, 1);
     EXPECT_EQ(dut->regwriteD, 1);
     EXPECT_EQ(dut->alusrcD, 1);
+    EXPECT_EQ(dut->memReadD, 0);   // ✅ NEW
 }
 
 TEST(DecodeStage, LUICheck) {
@@ -139,6 +144,7 @@ TEST(DecodeStage, LUICheck) {
     EXPECT_EQ(dut->regwriteD, 1);
     EXPECT_EQ(dut->alusrcD,   1);
     EXPECT_EQ(dut->alucontrolD, 0b1111); // LUI
+    EXPECT_EQ(dut->memReadD,  0);        // ✅ NEW
 }
 
 // ---------------------- main ---------------------------
