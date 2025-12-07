@@ -15,4 +15,7 @@ module InstrMem #(
 
     // Read Instruction
     assign instr = memory[addr[ADDR_WIDTH+1:2]]; // Word-aligned address
+    //PC is byte address but instuctions are 32bits=4bytes=1 word
+    //so we need to turn a byte address into a word index
+    //byte address divided by 4= Instruction right shift by 2 bits
 endmodule

@@ -10,16 +10,16 @@ module RegFile (
     output logic [31:0] a0        // exposed
 );
 
-    // 32 general-purpose registers x0..x31
+    // 32 general-purpose registers
     logic [31:0] regs [0:31];
 
-    // ---------- Combinational reads with write-first bypass ----------
+    // Combinational reads
     always_comb begin
         // rs1
         if (rs1 == 5'd0) begin
             rd1 = 32'b0;                          // x0 is always 0
         end else if (we && (rd == rs1) && (rd != 5'd0)) begin
-            rd1 = wd;                             // same-cycle write -> see new value
+            rd1 = wd;                             // same-cycle write
         end else begin
             rd1 = regs[rs1];
         end
@@ -34,7 +34,7 @@ module RegFile (
         end
     end
 
-    // synchronous write
+    // Synchronous write
     always_ff @(posedge clk) begin
         // keep x0 hard-wired
         regs[0] <= 32'b0;

@@ -1,0 +1,8 @@
+main:
+	addi	t1, zero, 0xf
+    addi	a0, zero, 0x0
+    addi 	a1, zero, 0x0
+iloop:
+	addi	a0, a1, 0
+    addi	a1, a1, 1
+    beq		a1, a1, iloop

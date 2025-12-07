@@ -1,26 +1,19 @@
-# EIE RISC-V CPU
+# RISC-V CPU
+## Summary
 
-A teaching / experimental RISC-V CPU project for Imperial EIE.
+## Statements
+- **Yi Dong** (yi.dong23@imperial.ac.uk):
+  - [Yi Dong's Statement](statements/YiDong.md)
+- **Seth Gobina** (seth.gobina24@imperial.ac.uk):
+  - [Seth Gobina's Statement](statements/SethGobina.md)
+- **Zain Asif** (zain.asif23@imperial.ac.uk):
+  - [Zain Asif's Statement](statements/ZainAsif.md)
+- **Mingze Chen** (mingze.chen24@imperial.ac.uk):
+  - [Mingze Chen's Statement](statements/MingzeChen.md)
+## Schematic
 
-## High-level layout
+## Structure / Task Delegation
 
-- \`rtl/\` — SystemVerilog RTL source
-  - \`single_cycle/\` — baseline single-cycle core
-  - \`pipelined/\` — pipelined core
-  - \`cache/\` — cache / memory hierarchy
-  - \`common/\` — shared components (muxes, adders, etc.)
-  - \`top/\` — top-level SoC / integration modules
-- \`tb/\` — testbenches
-  - \`unit/\` — unit-level testbenches (ALU, regfile, PC, CU, etc.)
-  - \`system/\` — full CPU testbenches
-  - \`vbuddy/\` — Vbuddy-specific testbenches and configs
-- \`sw/\` — RISC-V programs and test software
-  - \`reference/\` — reference programs provided by the course
-  - \`demos/\` — custom demo programs
-- \`tools/\` — scripts and CI helpers
-- \`docs/\` — design and verification documentation
+## [Making CPU?]
 
-This repo is structured to support:
-- clean separation of RTL / testbench / software / tooling
-- scalable extensions (pipeline, caches, branch prediction, etc.)
-- professional GitHub workflow with CI and code review.
+## Testing?

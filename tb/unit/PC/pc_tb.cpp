@@ -104,11 +104,20 @@ TEST_F(PCTest, BranchBackward)
 // -----------------------------------------------------
 TEST_F(PCTest, BranchOverridesIncrement)
 {
-    top->immop = 100;
-    top->pcsrc = 1;
+    top->alu_out = 100;
+    top->pcsrc = 2;
 
     tick();
     EXPECT_EQ(top->pc, 100u);
+}
+
+TEST_F(PCTest, MuxGround)
+{
+    top->alu_out = 100;
+    top->pcsrc = 3;
+
+    tick();
+    EXPECT_EQ(top->pc, 0u);
 }
 
 // -----------------------------------------------------
