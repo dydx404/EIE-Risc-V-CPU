@@ -33,17 +33,33 @@ Designed the forwarding unit for the pipelined core to resolve read after write 
 ##### A0 VBuddy Testing
 Wrote a C++ testbench that links the single cycle core to VBuddy, driving clock and reset, running the test program, and continuously displaying the lower 16 bits of a0 on the display. This was used to verify that the core executes the instruction memory correctly and produces the expected final value in a0.
 
+
 ## Special Design Decisions
-Instead of using 3 bit control signal for ALU, decided to use 4 bit signal. This allowed ALU to be implemented in a cleaner manner, by giving each operation unique encoding.
+**1. Expanding ALU control from 3 bits to 4 bits**
 
-Exposed a0 as a debug port in RegFile.sv. This allowed for easier debugging and display on the VBuddy.
+Originally, the Control Unit generated a 3 bit ALU control signal, but the ALU needed to support more than 8 operations. Instead of having overlapping functions, I switched to a 4-bit control signal.
+This gave each ALU operation its own unique encoding, reduced potential crossovers, and made the ALU easier to understand, extend and debug (especially for instructions like SRA/SRAI that behave differently from SRL/SRLI).
 
-//ELABORATE
+**2. Exposing a0**
+
+I added a direct output for register x10 (a0) inside the Register File. Since a0 is commonly used in test programs, exposing it simplified verification. This made it possible for both the Verilator testbench and VBuddy to monitor the processor's output live without modifying internal CPU behaviour.
+
+**3. Less Logic in Datapath.sv**
+
+When building the single-cycle datapath, I avoided adding too much logic inside the Datapath module. Instead, the datapath is a simple connection of modules (PC, InstrMem, RegFile, ALU, etc.). This choice made the design easier to reason about and kept responsibility for control flow inside the Control Unit.
+
+**4. Bundling signals in pipeline registers**
+
+For the pipelined version, I grouped control and data signals cleanly within each pipeline register stage. This avoided long lists of individual wires and made it much easier to expand or debug the pipeline during integration.
 
 ## Mistakes Made
 When initially configuring the datapath, the control unit was setup to use a 3 bit ALU control signal, whereas the ALU expected 4 bit. Thus, as a temporary solution for intial testing, I set the leftmost bit fixed at 0, but this inhibited the instructions that could be run. Communicated with team member in charge of datapath and eventaully we came to a solution of him configuring control unit to take a 4 bit signal, and then some reconfig of the ALU instructions as to how they are executed.
 
 //NEED SOME MORE
 ## What I Could Do Differently
+Establish clear signal names clearly before starting.
 
 ## Reflection
+Working on this project helped me learn a deeper understanding of the RISC-V CPU's inner workings, consolidating the content studied in lectures. I learnt how things piece together in a real scenario.
+
+Working on this also helped me better understand the complexities of working on a larger project with a team, utilising Git and GitHub to work asynchronously together without causing code clashes. 
