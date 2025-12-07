@@ -46,7 +46,7 @@ module Decode(
         .AddressingControl(addressingmodeD)
     );
 
-    RegisterFile Reg(
+    RegFile Reg(
         .CLK(CLK),
         .A1(instrd[19:15]),
         .A2(instrd[24:20]),
@@ -58,9 +58,9 @@ module Decode(
     );
 
     Extend ImmGen(
-        .Instr(instrd[31:7]),
+        .Immediate(instrd[31:7]),
         .ImmSrc(immsrc),
-        .Imm(extimmD)
+        .ImmExt(extimmD)
     );
 
     

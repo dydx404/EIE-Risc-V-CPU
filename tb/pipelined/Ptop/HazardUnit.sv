@@ -8,6 +8,7 @@ module HazardUnit(
     input logic [4:0]   rdW,
     input logic         regWriteM,
     input logic         regWriteW,
+    input logic         regWriteE,
     input logic         pcsrcE,
     output logic [1:0]  forwardAE,
     output logic [1:0]  forwardBE,
@@ -46,7 +47,7 @@ module HazardUnit(
         flushE = 1'b0;
 
         // Load-use hazard detection
-        if (regWriteM && rdM != 5'd0 && (rdE == rs1D || rdE == rs2D)) begin
+        if (regWriteE && (rdE == rs1D || rdE == rs2D)) begin
             stallF = 1'b1;
             stallD = 1'b1;
             flushE = 1'b1;

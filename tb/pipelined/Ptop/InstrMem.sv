@@ -8,6 +8,10 @@ module InstrMem(
     // Initialize Instruction Memory (replace with $readmemh if needed)
     initial begin
         // Add more instructions as needed
+        $readmemh("program.mem", memory);
+        $display("[InstrMem] memory[0] = %h", memory[32'hbfc00000]);
+        $display("[InstrMem] memory[1] = %h", memory[32'hbfc00001]);
+        $display("[InstrMem] memory[2] = %h", memory[32'hbfc00002]);
     end
 
     // Read Instruction

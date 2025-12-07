@@ -20,7 +20,7 @@ module PipelineTop #(
         .rst(rst),
         .en(!stallF),
         .branchE(jumpE||branchTakenE),
-        .jalrins(jalrE),
+        .jalrinsE(jalrE),
         .pc_targetE(branchTargetE),
         .alu_outE(aluResultE),
     
@@ -71,7 +71,7 @@ module PipelineTop #(
 
     Decode decode(
         .instrd(instrD),
-        .regwrite(regwriteW),
+        .regwrite(regWriteW),
         .CLK(clk),
         .rdW(rdW),
         .resultW(resultW),
@@ -239,6 +239,7 @@ module PipelineTop #(
 
     MEM_STAGE mem_stage(
         .clk(clk),
+        .rst(rst),
         .aluResultM(aluResultM),
         .writeDataM(writeDataM),
         .memWriteM(memWriteM),
@@ -318,6 +319,7 @@ module PipelineTop #(
         .rdW(rdW),
         .regWriteM(regWriteM),
         .regWriteW(regWriteW),
+        .regWriteE(regWriteE),
         .pcsrcE(branchTakenE||jumpE),
 
         .forwardAE(forwardAE),
