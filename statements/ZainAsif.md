@@ -63,8 +63,8 @@ One improvement would be to establish clear and consistent signal names across t
 I would also document assumptions and create a small readme for each individual component during development. This would help the entire team better understand how each module worked, prevented misunderstandings about responsiblities and made integration more cohesive.
 
 ## Reflection
-Working on this project helped me develop a much deeper understanding of the RISC-V CPU's inner workings, consolidating and extending on the content we studied in lectures. Implementing individual components and top modules gave me a clearer image of how each part interacts.
+Working on this project helped me develop a much deeper understanding of the RISC-V CPU's inner workings, consolidating the content we studied in lectures. Implementing individual components and top modules gave me a clearer image of how each part interacts.
 
 This also taught me how to work more effectively in a larger codebase with a team, and how to use Git and GitHub collaboratively.
 
-Overall, this project has improved my confidence with working in SystemVerilog, and showed me the importance of clear design decisions and effective communication within a team is towards hardware development.
+Overall, this project has improved my confidence working with SystemVerilog, and showed me the importance of clear design decisions and effective communication when working on hardware development within a team.
