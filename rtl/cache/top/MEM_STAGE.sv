@@ -2,37 +2,67 @@ module MEM_STAGE (
     input  logic        clk,
     input  logic        rst,
 
-    // -------------------------
-    // From EX/MEM Register
-    // -------------------------
-    input  logic [31:0] aluResultM,      // Address for load/store
-    input  logic [31:0] writeDataM,      // Store data (rs2 forwarded)
-    input  logic        memReadM,        // Load instruction?
-    input  logic        memWriteM,       // Store instruction?
-    input  logic [2:0]  addressingModeM, // Byte/Half/Word + signed/unsigned
+    // From EX/MEM
+    input  logic [31:0] aluResultM,
+    input  logic [31:0] writeDataM,
+    input  logic        memWriteM,
+    input  logic        memReadM,
+    input  logic [2:0]  addressingModeM,
 
-    // -------------------------
-    // Output to MEM/WB Register
-    // -------------------------
-    output logic [31:0] readDataM        // Loaded data (if load)
+    // To MEM/WB
+    output logic [31:0] readDataM,
+
+    // To Hazard Unit
+    output logic        cacheStallM
 );
 
-    // =====================================
-    //   Instantiate original DataMemory
-    // =====================================
+    // ============================
+    // Wires between cache & memory
+    // ============================
+    logic        mem_read;
+    logic        mem_write;
+    logic [31:0] mem_addr;
+    logic [31:0] mem_wdata;
+    logic [31:0] mem_rdata;
+    logic        mem_ready;
 
-    DataMemory data_mem (
-        .clk_i         (clk),
+    // ============================
+    // Data Cache
+    // ============================
+    DataCache dcache (
+        .clk(clk),
+        .reset(rst),
 
-        .mem_read_i    (memReadM),
-        .mem_write_i   (memWriteM),
+        // From pipeline
+        .memReadM(memReadM),
+        .memWriteM(memWriteM),
+        .addrM(aluResultM),
+        .writeDataM(writeDataM),
 
-        .addr_i        (aluResultM),
-        .write_data_i  (writeDataM),
+        // Back to pipeline
+        .readDataM(readDataM),
+        .stallM(cacheStallM),
 
-        .access_ctrl_i (addressingModeM),
+        // To main memory
+        .mem_read(mem_read),
+        .mem_write(mem_write),
+        .mem_addr(mem_addr),
+        .mem_wdata(mem_wdata),
+        .mem_rdata(mem_rdata),
+        .mem_ready(mem_ready)
+    );
 
-        .read_data_o   (readDataM)
+    // ============================
+    // Main Backing Memory
+    // ============================
+    MainMemory main_mem (
+        .clk(clk),
+        .mem_read(mem_read),
+        .mem_write(mem_write),
+        .addr(mem_addr),
+        .wdata(mem_wdata),
+        .rdata(mem_rdata),
+        .ready(mem_ready)
     );
 
 endmodule

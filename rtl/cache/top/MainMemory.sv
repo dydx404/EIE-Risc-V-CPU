@@ -7,10 +7,13 @@ module MainMemory (
     output logic [31:0] rdata,
     output logic        ready
 );
+    // 8KB backing store: 2048 words
+    logic [31:0] mem [0:2047];
 
-    logic [31:0] mem [0:2047];  // 8KB backing store (safe size)
-
-    initial $readmemh("program.mem", mem);
+    initial begin
+        // You can load your data/program here if you want
+        // $readmemh("gaussian.mem", mem);
+    end
 
     always_ff @(posedge clk) begin
         ready <= 1'b0;
@@ -25,5 +28,4 @@ module MainMemory (
             ready <= 1'b1;
         end
     end
-
 endmodule

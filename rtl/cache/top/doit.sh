@@ -1,11 +1,12 @@
 #!/bin/bash
 rm -rf obj_dir
 
-verilator -Wall --trace \
+verilator -Wall --trace --sv \
     --cc PipelineTop.sv \
     ALU.sv \
     ControlUnit.sv \
-    DataMemory.sv \
+    DataCache.sv \
+    MainMemory.sv \
     Decode.sv \
     EX_MEM.sv \
     IF_ID.sv \
