@@ -352,7 +352,7 @@ module PipelineTop #(
 
     //////////////////////////////////////
 
-/*
+
     always_ff @(posedge clk) begin
     if (!rst) begin
         $display("[IF ] PC = %h | instrF = %h", pcF, instrF);
@@ -400,12 +400,6 @@ always_ff @(posedge clk) begin
                  stallF, stallD, flushD, flushE,
                  rs1D, rs2D, rdE, memReadE);
     end
-end
-*/
-
-
-
-
-
+end 
 
 endmodule
