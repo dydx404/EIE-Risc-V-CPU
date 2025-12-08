@@ -41,21 +41,21 @@ int main(int argc, char **argv) {
 
         int a0 = (int)top->a0;
 
-        // old: hex display
-        // vbdHex(4, (a0 >> 12) & 0xF);
-        // vbdHex(3, (a0 >>  8) & 0xF);
-        // vbdHex(2, (a0 >>  4) & 0xF);
-        // vbdHex(1,  a0        & 0xF);
+        //hex display
+        vbdHex(4, (a0 >> 12) & 0xF);
+        vbdHex(3, (a0 >>  8) & 0xF);
+        vbdHex(2, (a0 >>  4) & 0xF);
+        vbdHex(1,  a0        & 0xF);
 
-        // new: waveform plot of a0
+        // waveform plot of a0 (if want this display instead)
         // clamp to 0–255 so it fits on the graph
-        vbdPlot(a0 & 0xFF, 0, 255);
+        /*vbdPlot(a0 & 0xFF, 0, 255);
 
         vbdCycle(i + 1);
 
-        if ((i % 1000) == 0) {
+         if ((i % 1000) == 0) {
             printf("cycle %5d  a0 = 0x%08x\n", i, a0);
-        }
+        }*/
 
         // stop if button pressed
         if (vbdFlag()) break;
