@@ -20,6 +20,18 @@ module PipelineTop #(
     logic       cacheStallM;   // from MEM stage (data cache)
 
     // ============================================================
+    // Forward-declared WB / global signals (used across stages)
+    // ============================================================
+    logic [4:0]  rdW;
+    logic        regWriteW;
+    logic [1:0]  resultSrcW;
+    logic [31:0] readDataW, aluResultW, pcPlus4W;
+
+    // Safe write-enable (block WB register write during cache stalls)
+    logic        safeRegWriteW;
+    assign safeRegWriteW = regWriteW & ~cacheStallM;
+
+    // ============================================================
     // IF STAGE
     // ============================================================
     logic [31:0] instrF, pcF, pc_plus4F;
@@ -71,7 +83,7 @@ module PipelineTop #(
 
     Decode decode_i (
         .instrd          (instrD),
-        .regwrite        (regWriteW),      // WB-stage write enable
+        .regwrite        (safeRegWriteW), // use safe write-enable
         .CLK             (clk),
         .rdW             (rdW),
         .resultW         (ResultW),
@@ -245,15 +257,11 @@ module PipelineTop #(
     // ============================================================
     // MEM → WB
     // ============================================================
-    logic [31:0] readDataW, aluResultW, pcPlus4W;
-    logic [4:0]  rdW;
-    logic        regWriteW;
-    logic [1:0]  resultSrcW;
 
     MEM_WB mem_wb_i (
         .clk        (clk),
         .rst        (rst),
-        .stall      (1'b0),
+        .stall      (cacheStallM),   // freeze WB on cache stall
         .flush      (1'b0),
 
         .readDataM  (readDataM),
@@ -284,7 +292,8 @@ module PipelineTop #(
     );
 
     assign rdW_out       = rdW;
-    assign regWriteW_out = regWriteW;
+    assign regWriteW_out = safeRegWriteW;  // export safe version
+    assign pc_out        = pcF;
 
     // ============================================================
     // HAZARD UNIT
@@ -298,7 +307,7 @@ module PipelineTop #(
         .rdM       (rdM),
         .rdW       (rdW),
         .regWriteM (regWriteM),
-        .regWriteW (regWriteW),
+        .regWriteW (safeRegWriteW),   // use safe write-enable here too
         .memReadE  (memReadE),
         .pcsrcE    (branchTakenE || jumpE),
 
@@ -310,60 +319,52 @@ module PipelineTop #(
         .flushE    (flushE)
     );
 
-    assign pc_out = pcF;
+    // ============================================================
+    // ================= PIPELINE DEBUG OBSERVERS =================
+    // ============================================================
+    always_ff @(posedge clk or posedge rst) begin
+        if (rst) begin
+            // no printing during reset
+        end else begin
+            // ---------------- IF ----------------
+            $display("[IF ] PC=%h | instrF=%h",
+                     pcF, instrF);
 
-// ============================================================
-// ================= PIPELINE DEBUG OBSERVERS =================
-// ============================================================
-/*
-always_ff @(posedge clk or posedge rst) begin
-    if (rst) begin
-        // no printing during reset
-    end else begin
-        // ---------------- IF ----------------
-        $display("[IF ] PC=%h | instrF=%h",
-                 pcF, instrF);
+            // ---------------- ID ----------------
+            $display("[ID ] rs1=%0d rs2=%0d rd=%0d | regW=%b memW=%b aluSrc=%b aluCtrl=%b",
+                     rs1D, rs2D, rdD,
+                     regwriteD, memwriteD,
+                     alusrcD, alucontrolD);
 
-        // ---------------- ID ----------------
-        $display("[ID ] rs1=%0d rs2=%0d rd=%0d | regW=%b memW=%b aluSrc=%b aluCtrl=%b",
-                 rs1D, rs2D, rdD,
-                 regwriteD, memwriteD,
-                 alusrcD, alucontrolD);
+            // ---------------- EX ----------------
+            $display("[EX ] A=%h B=%h | ALU=%h | branchTaken=%b",
+                     rd1E, rd2E,
+                     aluResultE,
+                     branchTakenE);
 
-        // ---------------- EX ----------------
-        $display("[EX ] A=%h B=%h | ALU=%h | branchTaken=%b",
-                 rd1E, rd2E,
-                 aluResultE,
-                 branchTakenE);
+            // ---------------- MEM ----------------
+            $display("[MEM] addr=%h writeData=%h memW=%b memR=%b readData=%h stall=%b",
+                     aluResultM,
+                     writeDataM,
+                     memWriteM,
+                     (resultSrcM == 2'b01),
+                     readDataM,
+                     cacheStallM);
 
-        // ---------------- MEM ----------------
-        $display("[MEM] addr=%h writeData=%h memW=%b memR=%b readData=%h stall=%b",
-                 aluResultM,
-                 writeDataM,
-                 memWriteM,
-                 (resultSrcM == 2'b01),
-                 readDataM,
-                 cacheStallM);
+            // ---------------- WB ----------------
+            if (safeRegWriteW) begin
+                $display("[WB ] rd=%0d data=%h src=%b",
+                         rdW, ResultW, resultSrcW);
+            end
 
-        // ---------------- WB ----------------
-        if (regWriteW) begin
-            $display("[WB ] rd=%0d data=%h src=%b",
-                     rdW, ResultW, resultSrcW);
+            // ---------------- HAZARD ----------------
+            $display("[HZ ] stallF=%b stallD=%b flushD=%b flushE=%b | rs1D=%0d rs2D=%0d rdE=%0d memReadE=%b",
+                     stallF, stallD, flushD, flushE,
+                     rs1D, rs2D, rdE, memReadE);
+
+            // ---------------- CYCLE SEPARATOR ----------------
+            $display("------------------------------------------------------");
         end
-
-        // ---------------- HAZARD ----------------
-        $display("[HZ ] stallF=%b stallD=%b flushD=%b flushE=%b | rs1D=%0d rs2D=%0d rdE=%0d memReadE=%b",
-                 stallF, stallD, flushD, flushE,
-                 rs1D, rs2D, rdE, memReadE);
-
-        // ---------------- CYCLE SEPARATOR ----------------
-        $display("------------------------------------------------------");
     end
-end
-*/
-// ============================================================
-// ============================================================
-
-
 
 endmodule

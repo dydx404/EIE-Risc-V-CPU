@@ -83,26 +83,27 @@ module ControlUnit #(
             endcase
         end
 
-        // ====================== BRANCHES ============================
-        7'b1100011: begin
-            RegWrite   = 1'b0;
-            ImmSrc     = 3'b010; // B-type
-            ALUSrc     = 1'b0;
-            ALUControl = ALU_SUB;
-            jumpD     = 1'b0;
-            jalrD     = 1'b0;
-            branchD   = 1'b1;
+// ====================== BRANCHES ============================
+7'b1100011: begin
+    RegWrite   = 1'b0;
+    ImmSrc     = 3'b010; // B-type
+    ALUSrc     = 1'b0;
+    jumpD      = 1'b0;
+    jalrD      = 1'b0;
+    branchD    = 1'b1;
 
-            case (funct3)
-                3'b000 : ALUControl = ALU_SUB;   // beq
-                3'b001 : ALUControl = 4'b1100;   // bne
-                3'b100 : ALUControl = ALU_SLT;   // blt
-                3'b101 : ALUControl = 4'b1001;   // bge
-                3'b110 : ALUControl = ALU_SLTU;   // bltu
-                3'b111 : ALUControl = 4'b1010;   // bgeu
-                default: branchD = 1'b1;
-            endcase
-        end
+    case (funct3)
+        3'b000: ALUControl = 4'b0001; // BEQ
+        3'b001: ALUControl = 4'b1100; // BNE
+        3'b100: ALUControl = 4'b0101; // BLT
+        3'b101: ALUControl = 4'b1001; // BGE
+        3'b110: ALUControl = 4'b0110; // BLTU
+        3'b111: ALUControl = 4'b1010; // BGEU
+        default: ALUControl = 4'b0000;
+    endcase
+end
+
+
 
         // ====================== I-TYPE ALU ==========================
         7'b0010011: begin

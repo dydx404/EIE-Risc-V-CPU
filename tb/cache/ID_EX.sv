@@ -57,50 +57,66 @@ module ID_EX (
 );
 
     always_ff @(posedge clk or posedge rst) begin
-        if (rst || flush) begin
-            // all control signals 0, data don't matter
-            pcE         <= 32'b0;
-            pcPlus4E    <= 32'b0;
-            rd1E        <= 32'b0;
-            rd2E        <= 32'b0;
-            immExtE     <= 32'b0;
-            rs1E        <= 5'b0;
-            rs2E        <= 5'b0;
-            rdE         <= 5'b0;
+    if (rst) begin
+        // full reset
+        pcE         <= 32'b0;
+        pcPlus4E    <= 32'b0;
+        rd1E        <= 32'b0;
+        rd2E        <= 32'b0;
+        immExtE     <= 32'b0;
+        rs1E        <= 5'b0;
+        rs2E        <= 5'b0;
+        rdE         <= 5'b0;
 
-            regWriteE   <= 1'b0;
-            memWriteE   <= 1'b0;
-            resultSrcE  <= 2'b00;
-            aluSrcE     <= 1'b0;
-            aluControlE <= 4'b0000;
-            branchE     <= 1'b0;
-            jumpE       <= 1'b0;
-            jalrE       <= 1'b0;
-            addressingmodeE <= 3'b000;
-            memReadE <= 1'b0;
+        regWriteE   <= 1'b0;
+        memWriteE   <= 1'b0;
+        resultSrcE  <= 2'b00;
+        aluSrcE     <= 1'b0;
+        aluControlE <= 4'b0000;
+        branchE     <= 1'b0;
+        jumpE       <= 1'b0;
+        jalrE       <= 1'b0;
+        addressingmodeE <= 3'b000;
+        memReadE    <= 1'b0;
+    end 
+    else if (flush) begin
+        
+        regWriteE   <= 1'b0;
+        memWriteE   <= 1'b0;
+        resultSrcE  <= 2'b00;
+        aluSrcE     <= 1'b0;
+        aluControlE <= 4'b0000;
+        branchE     <= 1'b0;
+        jumpE       <= 1'b0;
+        jalrE       <= 1'b0;
+        addressingmodeE <= 3'b000;
+        memReadE    <= 1'b0;
+        
+    end 
+    else if (!stall) begin
+        
+        pcE         <= pcD;
+        pcPlus4E    <= pcPlus4D;
+        rd1E        <= rd1D;
+        rd2E        <= rd2D;
+        immExtE     <= immExtD;
+        rs1E        <= rs1D;
+        rs2E        <= rs2D;
+        rdE         <= rdD;
 
-        end else if (!stall) begin
-            pcE         <= pcD;
-            pcPlus4E    <= pcPlus4D;
-            rd1E        <= rd1D;
-            rd2E        <= rd2D;
-            immExtE     <= immExtD;
-            rs1E        <= rs1D;
-            rs2E        <= rs2D;
-            rdE         <= rdD;
-
-            regWriteE   <= regWriteD;
-            memWriteE   <= memWriteD;
-            resultSrcE  <= resultSrcD;
-            aluSrcE     <= aluSrcD;
-            aluControlE <= aluControlD;
-            branchE     <= branchD;
-            jumpE       <= jumpD;
-            jalrE       <= jalrD;
-            addressingmodeE <= addressingmodeD;
-            memReadE <= memReadD;
-
-        end
+        regWriteE   <= regWriteD;
+        memWriteE   <= memWriteD;
+        resultSrcE  <= resultSrcD;
+        aluSrcE     <= aluSrcD;
+        aluControlE <= aluControlD;
+        branchE     <= branchD;
+        jumpE       <= jumpD;
+        jalrE       <= jalrD;
+        addressingmodeE <= addressingmodeD;
+        memReadE    <= memReadD;
     end
+   
+end
+
 
 endmodule

@@ -45,6 +45,7 @@ module MEM_STAGE (
         .memWriteM  (memWriteM),
         .addrM      (aluResultM),
         .writeDataM (writeDataM),
+        .addressingModeM (addressingModeM), 
 
         // Back to pipeline
         .readDataM  (readDataM),

@@ -1,3 +1,6 @@
+// ========================================
+//   ALU.sv  (clean zero flag, clear opcodes)
+// ========================================
 module ALU #(
     parameter LEN = 32
 ) (
@@ -9,62 +12,87 @@ module ALU #(
 );
 
     always_comb begin
+        // default
+        aluout = '0;
+
         unique case (alu_ctrl)
-            4'b0000: aluout = aluop1 + aluop2;                 // ADD / ADDI
+            4'b0000: begin
+                // ADD / ADDI
+                aluout = aluop1 + aluop2;
+            end
+
             4'b0001: begin
-                     aluout = aluop1 - aluop2;                 // SUB // BEQ
-                     zero = (aluout == {LEN{1'b0}});
+                // SUB  (used for SUB / BEQ base)
+                aluout = aluop1 - aluop2;
             end
 
-            4'b0010: aluout = aluop1 & aluop2;                 // AND / ANDI
-            4'b0011: aluout = aluop1 | aluop2;                 // OR / ORI
-            4'b0100: aluout = aluop1 ^ aluop2;                 // XOR / XORI
+            4'b0010: begin
+                // AND / ANDI
+                aluout = aluop1 & aluop2;
+            end
 
-            // SLT (signed) // BLT
+            4'b0011: begin
+                // OR / ORI
+                aluout = aluop1 | aluop2;
+            end
+
+            4'b0100: begin
+                // XOR / XORI
+                aluout = aluop1 ^ aluop2;
+            end
+
             4'b0101: begin
-                if ($signed(aluop1) < $signed(aluop2))
-                    aluout = {{(LEN-1){1'b0}}, 1'b1};
-                else
-                    aluout = {LEN{1'b0}};
-            zero = (aluout == {LEN{1'b1}});
+                // SLT (signed) / BLT
+                aluout = ($signed(aluop1) < $signed(aluop2)) ? 32'd1 : 32'd0;
             end
 
-            // SLTU (unsigned) // BLTU
             4'b0110: begin
-                if (aluop1 < aluop2)
-                    aluout = {{(LEN-1){1'b0}}, 1'b1};
-                else
-                    aluout = {LEN{1'b0}};
-            zero = (aluout == {LEN{1'b1}});
+                // SLTU (unsigned) / BLTU
+                aluout = (aluop1 < aluop2) ? 32'd1 : 32'd0;
             end
 
-            4'b0111: aluout = aluop1 <<  aluop2[4:0];           // SLL / SLLI
-            4'b1000: aluout = aluop1 >>  aluop2[4:0];           // SRL / SRLI
+            4'b0111: begin
+                // SLL / SLLI
+                aluout = aluop1 << aluop2[4:0];
+            end
+
+            4'b1000: begin
+                // SRL / SRLI
+                aluout = aluop1 >> aluop2[4:0];
+            end
+
             4'b1001: begin
-                     aluout = (aluop1 >= aluop2) ? 1 : 0;       // BGE
-                     zero = (aluout == {LEN{1'b1}});
+                // BGE (signed)
+                aluout = ($signed(aluop1) >= $signed(aluop2)) ? 32'd1 : 32'd0;
             end
 
             4'b1010: begin
-                     aluout = ($unsigned(aluop1) >= $unsigned(aluop2)) ? 1 : 0;
-                     zero = (aluout == {LEN{1'b1}});              // BGEU
+                // BGEU (unsigned)
+                aluout = ($unsigned(aluop1) >= $unsigned(aluop2)) ? 32'd1 : 32'd0;
             end
 
-            4'b1011: aluout = $signed(aluop1) >>> aluop2[4:0];  // SRA / SRAI
+            4'b1011: begin
+                // SRA / SRAI
+                aluout = $signed(aluop1) >>> aluop2[4:0];
+            end
+
             4'b1100: begin
-                     aluout = aluop1 - aluop2;
-                     zero = (aluout != {LEN{1'b0}});               // BNE
-            end     
+                // SUB (again) – used for BNE difference if you like
+                aluout = aluop1 - aluop2;
+            end
 
-            // LUI: rd = imm (upper 20 bits, low 12 = 0) – ImmExt
-            // For LUI, ControlUnit sets ALUSrc=1 so aluop2 = ImmExt.
-            4'b1111: aluout = aluop2;
+            4'b1111: begin
+                // LUI: rd = ImmExt (aluop2)
+                aluout = aluop2;
+            end
 
-            default: aluout = {LEN{1'b0}};
+            default: begin
+                aluout = '0;
+            end
         endcase
     end
 
-    // zero flag 
-    //zero = (aluout == {LEN{1'b0}});
+    // Zero flag is **always** consistent: result == 0
+    assign zero = (aluout == {LEN{1'b0}});
 
 endmodule
