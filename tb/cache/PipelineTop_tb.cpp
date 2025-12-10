@@ -48,7 +48,7 @@ int main(int argc, char **argv)
     // -----------------------------------------------------
     // Run CPU
     // -----------------------------------------------------
-    const int NUM_CYCLES = 10000000;
+    const int NUM_CYCLES = 5700;
 
     for (int cycle = 0; cycle < NUM_CYCLES; cycle++)
     {

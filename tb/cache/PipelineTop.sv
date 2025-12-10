@@ -36,14 +36,17 @@ module PipelineTop #(
     // ============================================================
     logic [31:0] instrF, pcF, pc_plus4F;
 
+    logic jalrE_eff;
+
+    assign jalrE_eff = jalrE & ~cacheStallM;
     fetch fetch_i (
         .clk        (clk),
         .rst        (rst),
         .en         (!stallF && !cacheStallM),  // freeze on hazards OR cache stall
-        .branchE    (jumpE || branchTakenE),
-        .jalrinsE   (jalrE),
+        .jalrinsE   (jalrE_eff),
         .pc_targetE (branchTargetE),
         .alu_outE   (aluResultE),
+        .branchE    (pcsrcE_eff),
 
         .instrF     (instrF),
         .pcF        (pcF),
@@ -178,6 +181,7 @@ module PipelineTop #(
     // ============================================================
     logic [31:0] aluResultE, writeDataE, branchTargetE;
     logic        branchTakenE;
+    logic pcsrcE_eff;
 
     EXECUTE_STAGE execute_stage_i (
         .pcE          (pcE),
@@ -199,6 +203,7 @@ module PipelineTop #(
         .branchTargetE(branchTargetE),
         .branchTakenE (branchTakenE)
     );
+     assign pcsrcE_eff = (branchTakenE || jumpE) & ~cacheStallM;
 
     // ============================================================
     // EX → MEM
@@ -309,7 +314,7 @@ module PipelineTop #(
         .regWriteM (regWriteM),
         .regWriteW (safeRegWriteW),   // use safe write-enable here too
         .memReadE  (memReadE),
-        .pcsrcE    (branchTakenE || jumpE),
+        .pcsrcE    (pcsrcE_eff),
 
         .forwardAE (forwardAE),
         .forwardBE (forwardBE),
@@ -318,7 +323,7 @@ module PipelineTop #(
         .flushD    (flushD),
         .flushE    (flushE)
     );
-
+/*
     // ============================================================
     // ================= PIPELINE DEBUG OBSERVERS =================
     // ============================================================
@@ -366,5 +371,5 @@ module PipelineTop #(
             $display("------------------------------------------------------");
         end
     end
-
+*/
 endmodule
