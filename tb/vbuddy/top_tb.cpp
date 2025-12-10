@@ -42,7 +42,7 @@ int main(int argc, char **argv, char **env)
     {
         return (-1);
     }
-    vbdHeader("Single Cycle");
+    vbdHeader("CPU");
     vbdSetMode(1);
 
     // intialise
@@ -63,7 +63,7 @@ int main(int argc, char **argv, char **env)
         }
 
         // Test data
-        if (simcyc > 123705)
+        if (simcyc > 37530) // gaussian=123705, noisy=204890, triangle=316018, sine=37530
         {
             vbdPlot(top->a0, 0, 255);
             vbdBar(top->a0 & 0xFF);
