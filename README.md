@@ -1,6 +1,7 @@
 # RISC-V CPU
 
 ## Summary
+This project involved designing, implementing, and verifying a RISC-V RV32I processor in SystemVerilog, starting from a fully functional single-cycle CPU and extending it into a pipelined 5 stage architecture. Our final design included instruction and data memory, full ALU and control logic, pipelining, a hazard detection unit, and support for running the provided reference program.
 
 ## Team Member Statements
 - **Yi Dong** (yi.dong23@imperial.ac.uk)  
