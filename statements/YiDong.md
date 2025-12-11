@@ -43,6 +43,7 @@ As the Repository Master and Lead Developer, I led the architectural design, imp
     - [Improvements for the Future](#improvements-for-the-future)
     - [Key Takeaways](#key-takeaways)
   - [9. Commit Records](#9-commit-records)
+  - [Commit Appendix](#commit-appendix)
 
 ---
 
@@ -133,7 +134,7 @@ I also supported unit verification for the **Control Unit** and **Immediate Gene
 
 To validate the integrated single-cycle CPU, I helped design and/or run several focused assembly programs:
 
-- **ALU Test:**  
+- [**ALU Test:**](tb/single_cycle/test-alu)
   A compact program that builds operands using `addi` and verifies ADD, SUB, XOR, OR, AND, SLT, SLTU. Results are accumulated into `a0`, which ends at a known value (e.g. 11), confirming correct ALU behaviour and control decoding.
 
 - **“Nerfed” ALU Test (SRA/SRAI Focus):**  
@@ -456,7 +457,7 @@ Beyond core RTL work, I also:
 
 - Helped define and maintain coding style and file structure conventions across the team.  
 - Contributed to Vbuddy testbenches and visualisation setups, especially for earlier labs and for simple single-cycle demos.  
-- Wrote documentation and comments describing how to run tests, how the memory preload mechanism works, and how to interpret debug traces.  
+- Create the Team Final Statements 
 - Assisted teammates in debugging their modules (e.g. aligning control encodings and resolving off-by-one or sign-extension bugs).
 
 These “infrastructure” tasks were less visible than the main CPU pipeline, but they significantly reduced friction in day-to-day development.
@@ -496,5 +497,63 @@ If I were to repeat this project, I would:
 The commit history in these branches documents both the incremental implementation of modules and the iterative debugging process (e.g. hazard fixes, forwarding corrections, and cache integration adjustments). Together, they provide an auditable record of my role in the project.
 
 ---
+## Commit Appendix
+
+| Commit ID | Date | Commit Description |
+|-----------|------|--------------------|
+| 343acc4 | 2025-12-11 | Remove README to prepare for merge |
+| 5cd5cfe | 2025-12-11 | updated statements |
+| 9197cdf | 2025-12-10 | docs: progress on individual contribution statement |
+| 67fcc0f | 2025-12-10 | On cache-rebuild: temp: cache + statement mixed WIP |
+| 08ae5f0 | 2025-12-10 | index on cache-rebuild: 0935cd6 first 4 test good |
+| d8a4b14 | 2025-12-10 | untracked files on cache-rebuild: 0935cd6 first 4 test good |
+| 6e28374 | 2025-12-10 | WIP: cache pipeline + testbench + program.mem updates |
+| 0935cd6 | 2025-12-09 | first 4 test good |
+| c2ef213 | 2025-12-08 | Cache rebuild baseline: pipeline + debug + corrected test program |
+| 752985c | 2025-12-08 | First four test correct |
+| 5f1607e | 2025-12-08 | minimal model |
+| fab2db9 | 2025-12-08 | small fix |
+| 945387d | 2025-12-08 | small fix |
+| 212f364 | 2025-12-07 | Fix regfile debug exposure and improve WB testbench observability |
+| bf82fac | 2025-12-07 | Pipeline bring-up: ALU/addi verified, WB path correct, PC stepping validated via IF trace |
+| a357767 | 2025-12-07 | WIP: pipeline top integration and hazard rewiring |
+| 61a0057 | 2025-12-07 | WIP: pipeline top integration, wiring pass in progress |
+| 5ddab16 | 2025-12-07 | Fix true load-use hazard detection and add HazardUnit gtest |
+| 85b793a | 2025-12-07 | Fix Decode memReadD signal and update gtest for load-use support |
+| 25fff89 | 2025-12-07 | test(wb): verify writeback stage mux for alu mem and PC+4 |
+| b90e80a | 2025-12-07 | test(mem): verify MEM stage; load/store widths and sign extension |
+| f7845c4 | 2025-12-07 | test(ex): verify Execute stage; forwarding, ALUSrc, and branchTaken logic |
+| f30a37c | 2025-12-07 | test(id): verify Decode stage; assert branchD and fix funct7 wiring |
+| a02f06f | 2025-12-07 | test(pipelined): scaffold full component verification structure |
+| b2eddff | 2025-11-30 | Add Execute stage with forwarding and ALU muxing |
+| 626e3ef | 2025-11-30 | Add MEM_STAGE and DataMemory to mem-stage branch |
+| ca9afbb | 2025-11-30 | Add MEM_STAGE, DataMemory copy, WB_STAGE |
+| 32a9666 | 2025-11-29 | Fix DMEM preload, add MemRead support, fix control path, test-reference integration |
+| 2fd7152 | 2025-11-28 | test-reference: added DataMemory preload, program.mem, gaussian.mem, and full test setup |
+| 598986f | 2025-11-28 | Overwrite test-reference with fresh copy from test-general |
+| c98514b | 2025-11-28 | Full general test program and verification output |
+| 85b516f | 2025-11-28 | Add full SRA/SRAI correctness test and verification |
+| 67f977b | 2025-11-28 | nerfed arithmatic program test |
+| dc4d4a6 | 2025-11-28 | Add regfile-zero test (x0 behaviour verified) |
+| 645a4df | 2025-11-28 | Merge branch 'feature/test-immediate' into feature/test-immediate |
+| f0becd2 | 2025-11-28 | Add immediate-format test (SRAI still failing, others OK) |
+| 6dfb968 | 2025-11-28 | Add ALU test (exposes SRAI bug) |
+| 01c93eb | 2025-11-28 | Add load/store test program and testbench for feature/test-loadstore |
+| 97ad589 | 2025-11-28 | Add program.s for branch test |
+| 4f7d595 | 2025-11-26 | Add standalone top-level CPU integration and testbench (top.sv, top_tb.cpp, program.mem, doit.sh) |
+| 022e2da | 2025-11-26 | Resolve conflict: keep CU_verification version of ControlUnit.sv |
+| 8a55383 | 2025-11-26 | Fix CU + GTest + doit.sh working version |
+| f4034d4 | 2025-11-25 | Add GoogleTest verification suite for ControlUnit |
+| c9e8fa9 | 2025-11-25 | Extend verification: add full testbench, updated Extend module, and PC/doit fix |
+| 5f4dff8 | 2025-11-24 | Add new DataMemory design |
+| c3f076c | 2025-11-20 | fix structure (merge develop) |
+| 73d9cab | 2025-11-20 | Restore folder structure from commit a06638c |
+| ba71dae | 2025-11-20 | Merge develop → main to preserve file system |
+| 0e71153 | 2025-11-20 | Add DataMemory module and complete unit verification |
+| 9bd1968 | 2025-11-18 | Add develop branch, PR/issue templates, improved README |
+| a06638c | 2025-11-18 | Add complete folder structure and README placeholders |
+| fa43638 | 2025-11-18 | Add project structure, tasks, contribution docs |
+| 98dde8b | 2025-11-18 | Initial project structure for RISC-V CPU |
+
 
 [^p]: *Partial credit / supporting role.*
