@@ -32,6 +32,10 @@ Implemented all four pipeline register stages (IF/ID, ID/EX, EX/MEM, MEM/WB), ca
 Designed the forwarding unit for the pipelined core to resolve read after write data hazards without stalling. It compares source registers in the Execute stage with destination registers in later stages and drives 2 bit select signals to choose between the original operand, the EX/MEM result, or the MEM/WB writeback value.
 #### **[A0 VBuddy Testing](https://github.com/dydx404/EIE-Risc-V-CPU/tree/feature/a0-test)**
 Wrote a C++ testbench that links the single cycle core to VBuddy, driving clock and reset, running the test program (10+20=30), and continuously displaying the lower 16 bits of a0 on the display. This was used to verify that the core executes the instruction memory correctly and produces the expected final value in a0.
+
+https://github.com/user-attachments/assets/1fd66059-7e83-4343-bd51-0d5247b3e494
+
+
 #### **Group Readme Skeleton**
 Assisted in developing the group readme by creating the skeleton, which was then built on by other group members.
 
