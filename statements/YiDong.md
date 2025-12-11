@@ -134,7 +134,7 @@ I also supported unit verification for the **Control Unit** and **Immediate Gene
 
 To validate the integrated single-cycle CPU, I helped design and/or run several focused assembly programs:
 
-- [**ALU Test:**](tb/single_cycle/test-alu)
+- [**ALU Test:**](../tb/single_cycle/test-alu)
   A compact program that builds operands using `addi` and verifies ADD, SUB, XOR, OR, AND, SLT, SLTU. Results are accumulated into `a0`, which ends at a known value (e.g. 11), confirming correct ALU behaviour and control decoding.
 
 - **“Nerfed” ALU Test (SRA/SRAI Focus):**  
