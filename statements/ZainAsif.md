@@ -31,7 +31,7 @@ Implemented all four pipeline register stages (IF/ID, ID/EX, EX/MEM, MEM/WB), ca
 ##### **[Forwarding Unit](https://github.com/dydx404/EIE-Risc-V-CPU/tree/feature/forwarding-unit/)**
 Designed the forwarding unit for the pipelined core to resolve read after write data hazards without stalling. It compares source registers in the Execute stage with destination registers in later stages and drives 2 bit select signals to choose between the original operand, the EX/MEM result, or the MEM/WB writeback value.
 ##### **[A0 VBuddy Testing](https://github.com/dydx404/EIE-Risc-V-CPU/tree/feature/a0-test)**
-Wrote a C++ testbench that links the single cycle core to VBuddy, driving clock and reset, running the test program, and continuously displaying the lower 16 bits of a0 on the display. This was used to verify that the core executes the instruction memory correctly and produces the expected final value in a0.
+Wrote a C++ testbench that links the single cycle core to VBuddy, driving clock and reset, running the test program (10+20=30), and continuously displaying the lower 16 bits of a0 on the display. This was used to verify that the core executes the instruction memory correctly and produces the expected final value in a0.
 
 
 ## Special Design Decisions
