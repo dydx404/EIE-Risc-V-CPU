@@ -28,10 +28,13 @@ Single cycle register file with asynchronous reads for rs1/rs2 and synchronous w
 Wired up the single cycle datapath by instantiating and connecting the Program Counter, Instruction Memory, Register File, Immediate Extension unit, ALU (Arithmetic Logic Unit), Data Memory, PC+4 logic, branch/jump target logic, and the writeback multiplexer. I also exposed internal signals such as pc, instr, alu_result, and a0 to simplify debugging and verification.
 #### **[Pipeline Registers](https://github.com/dydx404/EIE-Risc-V-CPU/tree/feature/pipeline_regs)**
 Implemented all four pipeline register stages (IF/ID, ID/EX, EX/MEM, MEM/WB), capturing the relevant data and control signals between stages. Each register supports stall and flush control, allowing the hazard unit to insert bubbles or hold values when needed.
-##### **[Forwarding Unit](https://github.com/dydx404/EIE-Risc-V-CPU/tree/feature/forwarding-unit/)**
+#### **[Forwarding Unit](https://github.com/dydx404/EIE-Risc-V-CPU/tree/feature/forwarding-unit/)**
 Designed the forwarding unit for the pipelined core to resolve read after write data hazards without stalling. It compares source registers in the Execute stage with destination registers in later stages and drives 2 bit select signals to choose between the original operand, the EX/MEM result, or the MEM/WB writeback value.
-##### **[A0 VBuddy Testing](https://github.com/dydx404/EIE-Risc-V-CPU/tree/feature/a0-test)**
+#### **[A0 VBuddy Testing](https://github.com/dydx404/EIE-Risc-V-CPU/tree/feature/a0-test)**
 Wrote a C++ testbench that links the single cycle core to VBuddy, driving clock and reset, running the test program (10+20=30), and continuously displaying the lower 16 bits of a0 on the display. This was used to verify that the core executes the instruction memory correctly and produces the expected final value in a0.
+![Video Test](https://github.com/dydx404/EIE-Risc-V-CPU/blob/develop/data/ZainAsif/a0VerificationTest.mp4)
+#### **Group Readme Skeleton**
+Assisted in developing the group readme by creating the skeleton, which was then built on by other group members.
 
 
 ## Special Design Decisions
