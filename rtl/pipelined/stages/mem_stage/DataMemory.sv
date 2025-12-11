@@ -79,6 +79,7 @@ module DataMemory #(
                     ram_array[addr+2] <= write_data_i[23:16];
                     ram_array[addr+3] <= write_data_i[31:24];
                 end
+                default: ; // do nothing
             endcase
         end
     end

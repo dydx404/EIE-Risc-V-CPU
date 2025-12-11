@@ -4,8 +4,6 @@
 // ========================================
 
 module EXECUTE_STAGE (
-    input  logic        clk,
-    input  logic        rst,
 
     // -------------------------
     // From ID/EX pipeline register
@@ -14,17 +12,11 @@ module EXECUTE_STAGE (
     input  logic [31:0] rd1E,          // operand A (from register file)
     input  logic [31:0] rd2E,          // operand B (from register file)
     input  logic [31:0] extImmE,       // sign-extended immediate
-    input  logic [4:0]  rdE,           // destination register (unchanged)
 
     // Control signals from ID/EX
     input  logic [3:0]  aluControlE,   // ALU control (e.g. ADD/SUB/XOR/SLT)
     input  logic        aluSrcE,       // select immediate vs register
     input  logic        branchE,       // BEQ/BNE/etc.
-    input  logic        regWriteE,
-    input  logic        memReadE,
-    input  logic        memWriteE,
-    input  logic [1:0]  resultSrcE,
-    input  logic [2:0]  addressingModeE,
 
     // -------------------------
     // Forwarding inputs

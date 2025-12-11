@@ -1,5 +1,5 @@
 module PCFlat #(
-    DATA_WIDTH = 32
+    parameter DATA_WIDTH = 32
 ) (
     input   logic                     clk,
     input   logic                     rst,
@@ -11,30 +11,33 @@ module PCFlat #(
     output  logic [DATA_WIDTH-1:0]    pcF,
     output  logic [DATA_WIDTH-1:0]    pc_plus4F
 );
+
     logic [DATA_WIDTH-1:0] pc_next;
     logic [DATA_WIDTH-1:0] jalr_target;
-    logic [DATA_WIDTH-1:0] jump_buff;
 
     // PC + 4
-    assign pc_plus4F = pcF + 4;
+    assign pc_plus4F = pcF + 32'd4;
 
-    // JALR Target is directly from alu_out
-    // assign jalr_target = alu_out;
-    assign jalr_target = {alu_outE[DATA_WIDTH-1:1], 1'b0}; // Ensure LSB is 0
+    // JALR target must be aligned
+    assign jalr_target = {alu_outE[DATA_WIDTH-1:1], 1'b0};
 
-    // Mux
+
     always_comb begin
-        assign jump_buff = branchE ? pc_plus4F : pc_targetE;
-        assign pc_next = jalrinsE ? jump_buff : jalr_target;
+        pc_next = pc_plus4F;        // default
+
+        if (branchE)
+            pc_next = pc_targetE;
+
+        if (jalrinsE)
+            pc_next = jalr_target;
     end
 
-    // PC Register
+    // ✅ PC Register
     always_ff @(posedge clk or posedge rst) begin
-        if (rst) begin
-            pcF <= 32'hBFC0000;
-        end else if (en) begin
+        if (rst)
+            pcF <= 32'b0;           // ✅ start at 0 for now (safe)
+        else if (en)
             pcF <= pc_next;
-        end
     end
-    
+
 endmodule

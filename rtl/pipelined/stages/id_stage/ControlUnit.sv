@@ -91,6 +91,7 @@ module ControlUnit #(
             ALUControl = ALU_SUB;
             jumpD     = 1'b0;
             jalrD     = 1'b0;
+            branchD   = 1'b1;
 
             case (funct3)
                 3'b000 : ALUControl = ALU_SUB;   // beq
