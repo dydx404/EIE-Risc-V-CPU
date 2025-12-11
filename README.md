@@ -11,7 +11,7 @@ This project involved designing, implementing, and verifying a RISC-V RV32I proc
 - **Zain Asif** (zain.asif23@imperial.ac.uk)  
   - [Zain Asif's Statement](statements/ZainAsif.md)
 - **Mingze Chen** (mingze.chen24@imperial.ac.uk)  
-  - [Mingze Chen's Statement](statements/MingzeChen.md)
+  - [Mingze Chen's Statement](statements/MingzeChen/MingzeChen.md)
 
 ## Architecture & Schematic
 
