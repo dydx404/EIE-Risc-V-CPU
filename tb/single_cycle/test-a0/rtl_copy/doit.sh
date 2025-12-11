@@ -1,8 +1,14 @@
 #!/bin/bash
+set -e
+
+# Clean previous build
 rm -rf obj_dir
-rm -f top.vcd
 
+# Attach Vbuddy (Virtual Buddy) USB (Universal Serial Bus) device under WSL (Windows Subsystem for Linux).
+# Comment this line out if you are on macOS (Mac Operating System) or have already attached the device manually.
+~/Documents/iac/lab0-devtools/tools/attach_usb.sh
 
+# Run Verilator (Verilog Simulator) to generate C++ model
 verilator -Wall --trace \
     --cc top.sv \
     ALU.sv \
@@ -20,6 +26,8 @@ verilator -Wall --trace \
     --Wno-EOFNEWLINE \
     --Wno-CASEINCOMPLETE \
 
+# Build the executable
 make -j -C obj_dir -f Vtop.mk Vtop
 
+# Run the simulation
 ./obj_dir/Vtop
