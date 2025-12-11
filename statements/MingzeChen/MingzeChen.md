@@ -538,30 +538,36 @@ Like mentioned, different data inputs require different sim cycles to acquire th
 
 Folowing are the videos of pdf results.
 
-##### Sine
+##### [Sine](https://github.com/dydx404/EIE-Risc-V-CPU/tree/main/statements/MingzeChen/video/Sine.mp4)
 
-[Sine](https://github.com/dydx404/EIE-Risc-V-CPU/tree/main/statements/MingzeChen/video/Sine.mp4)
+##### [Triangle](https://github.com/dydx404/EIE-Risc-V-CPU/tree/main/statements/MingzeChen/video/Triangle.mp4)
 
-##### Triangle
+##### [Noisy](https://github.com/dydx404/EIE-Risc-V-CPU/tree/main/statements/MingzeChen/video/Noisy.mp4)
 
-[Triangle](https://github.com/dydx404/EIE-Risc-V-CPU/tree/main/statements/MingzeChen/video/Triangle.mp4)
-
-##### Noisy
-
-[Noisy](https://github.com/dydx404/EIE-Risc-V-CPU/tree/main/statements/MingzeChen/video/Noisy.mp4)
-
-##### Gaussian
-
-[Gaussian](https://github.com/dydx404/EIE-Risc-V-CPU/tree/main/statements/MingzeChen/video/Gaussian.mp4)
+##### [Gaussian](https://github.com/dydx404/EIE-Risc-V-CPU/tree/main/statements/MingzeChen/video/Gaussian.mp4)
 
 ## Key Influences
 
 [Back to top](#top)
 
+As I am working on the top-level implementation of the pipeline processor, a lot of my key influences come from this. Originally in the single cycle processor implementation, we separate the processor into two main paths, namely control path and data path. But this separation does not make sense when grouping files and assign tasks in the pipeline processor. So, I decided that we should construct multiple stage modules that group smaller basic components together for us to better cooperate and debug the whole processor.
+
+I also work on the program counter of both the single cycle and pipeline processor. And I decided instead of creating a mid-level top for PC and its smaller modules, it should be implemented all in a single file do not over complicate things.
+
 ## Shortcomings
 
 [Back to top](#top)
 
+In the beginning of the project, I am too excited and dived straight in, without reading the criteria of the testing in the GitHub page. This created a lot of issues later that I have to go back and fix my own mistakes.
+
+Also, I am sort of the head of the pipeline processor, but my leadership skills do not seem to accompany that. I often give too little instructions to my teammates, so they end up giving me something that is not what I imagined, and I have to fix their stuff and waste precious time.
+
 ## Reflection
 
 [Back to top](#top)
+
+Like one always said, read instructions before doing anything! I need to read through all the instructions and come up with a plan with clear deadlines and specifications with measurable progress indicator, so that I can work efficiently instead of plunging straight in and ended up revising and redo all the stuff I’ve done and waste time.
+
+A good repo structure also accompanies with that. A clear file structure there will be less confusing and have less asking which thing is where. This could significantly improve our efficiency.
+
+Also, I need to practice my communications skill. When I need somebody else to do something for me, I need a clear specification of what I need and why the thing is needed to achieve my goal. This will build context for them and reduce the case, like I mentioned before, of Communicating back and forth and revising tasks.
