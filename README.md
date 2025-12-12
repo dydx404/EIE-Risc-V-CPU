@@ -18,7 +18,7 @@
 
 ## Final CPU Schematic
 
-![CPU with Pipelining](../docs/img/pipeline.png)(we also Implemented Cache, later)
+![CPU with Pipelining](docs/img/pipeline.png)(we also Implemented Cache, later)
 
 ## Planning
 [put all details regarding planning (for both single cycle, pipelined, and cache here)]
@@ -40,7 +40,7 @@ This approach provides a clear overview of our current progress, ensuring a clea
  
 
 # Single Cycle RV32I Design
-![](../EIE-Risc-V-CPU/docs/img/single%20cycle.png)
+![](docs/img/single%20cycle.png)
 
 ## Single-Cycle RV32I Design – SystemVerilog Modules
 
