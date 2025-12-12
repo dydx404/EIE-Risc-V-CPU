@@ -408,7 +408,7 @@ int main(int argc, char **argv, char **env)
 The tests for both single cycle and the pipelined CPU were written up [here](tb/single_cycle/test-reference/rtl_copy) and [here](tb/pipelined/Ptop) respectively using programs specified in the testing folder.
 
 ### Testing videos
-The following videos demonstrate the F1 program's functionality on a pipelined CPU with both data memory cache and instruction memory cache.the best way to test is to go to our clean version at [Pureversion](../test/Pureversion_test_here/)
+The following videos demonstrate the F1 program's functionality on a pipelined CPU with both data memory cache and instruction memory cache.the best way to test is to go to our clean version at [Pureversion](test/Pureversion_test_here/)
 
 #### F1 Program:
 [F1](https://github.com/dydx404/EIE-Risc-V-CPU/tree/main/statements/MingzeChen/video/F1.mp4)
