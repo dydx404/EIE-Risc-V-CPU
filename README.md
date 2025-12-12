@@ -117,18 +117,18 @@ Each control signal plays a specific role in directing data flow through the CPU
 * **PCSrc** – determines the next Program Counter value.
 * **ResultSrc** – selects the data written back to the Register File.
 * **ImmSrc** – identifies the immediate format so the ImmGen can reconstruct it.
-* **AddressingControl** – determines how Data Memory reconstructs loaded data (e.g., sign or zero extension).
+* **AddressingControl** – determines how Data Memory constructs data for load and store instructions.
 
-|Opcode|Type|RegWrite|ALUSrc|MemWrite|PCSrc|ResultSrc|ImmSrc|AddressingControl|
-|------|----|--------|------|--------|-----|---------|------|-----------------|
-| 0110011 | R-type|1|0|0|00|00|000|000|
-|1100011|Branch|0|0|0|00/01*|00|010|000|
-|0010011|I-type ALU|1|1|0|00|00|000|000|
-|1101111|JAL|1|0|0|01|10|011|000|
-|0000011|Load|1|1|0|00|01|000|funct3|
-|0100011|Store|0|1|1|00|00|001|funct3|
-|1100111|JALR|1|1|0|10|10|000|000|
-|0110111|LUI|1|1|0|00|00|100|000|
+|Opcode|Type|RegWrite|ALUSrc|MemWrite|PCSrc|ResultSrc|ImmSrc|AddressingControl| Instructions |
+|------|----|--------|------|--------|-----|---------|------|-----------------|--------------|
+| 0110011 | R-type|1|0|0|00|00|000|000|`sub` `add` `sll` `slt` `sltu` `xor` `or` `and` `srl` `sra`|
+|1100011|Branch|0|0|0|00/01*|00|010|000|`beq` `bne`|
+|0010011|I-type ALU|1|1|0|00|00|000|000|`addi` `slti` `sltiu` `slli` `xori` `ori` `andi`  `srli` `srai` |
+|1101111|JAL|1|0|0|01|10|011|000|`jal`|
+|0000011|Load|1|1|0|00|01|000|funct3| `lb` `lh` `lw` `lbu` `lhu`|
+|0100011|Store|0|1|1|00|00|001|funct3|`sb` `sh` `sw`|
+|1100111|JALR|1|1|0|10|10|000|000|`jalr`|
+|0110111|LUI|1|1|0|00|00|100|000|`lui`|
 
 ---
 
@@ -184,40 +184,6 @@ For simulation, I added a preload mechanism using `$readmemh`, which loads exter
 - general top level tests 
 
 and makes it easy to swap test programs without recompiling RTL.
-
-## Design Decisions
-
-### Addressing Control
-
-This control signal is produced by the control unit and is used to choose how we want to construct the bytes onto word in data memory. This is especially useful for instructions such as `lb`, `lh`, `sh`, `sb` where we only want to extract/store a byte or half of the word instead of the entire word.
-
-The addressing control is 3 bits wide, the MSB is to choose between signed or unsigned extension and the remaining bits are used for choosing the different modes and they are allocated for each cases as follows:
-
-| AdddressingControl [1:0] | AddressingControl [2] | Load Instruction type | Store Instruction type |
-| -------- | :--------: | :--------: | :--------: |
-| 2'b00  | 1'b0 | `lb` | `sb` |
-| 2'b00 | 1'b1 |  `lbu` | xx |
-| 2'b01 | 1'b0 | `lh` | `sh` |
-| 2'b01 | 1'b1 | `lhu` | xx |
-| 2'b10 | xx | `lw` | `sw` |
-
-
-### Implemented Instructions 
-
-#### R-Type
-`add` `sub` `sll` `slt` `sltu` `xor` `srl` `sra` `or` `and`
-#### B-Type
-`beq` `bne` 
-#### I-Type
-`addi` `slli` `slti` `sltiu` `xori` `srli` `srai` `ori` `andi` `lb` `lh` `lw` `lbu` `lhu` `jalr`
-#### J-Type
-`jal`
-#### S-Type
-`sb` `sh` `sw`
-#### U-Type
-`lui`
-  
-*  `blt` `bge` `bgeu` `bltu` have only been implemented in the pipelined version. Single cycle only implements `beq` and `bne`.
 
 ## Final Schematic for Single Cycle CPU
 
