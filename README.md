@@ -80,18 +80,18 @@ Each control signal plays a specific role in directing data flow through the CPU
 * **PCSrc** – determines the next Program Counter value.
 * **ResultSrc** – selects the data written back to the Register File.
 * **ImmSrc** – identifies the immediate format so the ImmGen can reconstruct it.
-* **AddressingControl** – determines how Data Memory reconstructs loaded data (e.g., sign or zero extension).
+* **AddressingControl** – determines how Data Memory constructs data for load and store instructions.
 
-|Opcode|Type|RegWrite|ALUSrc|MemWrite|PCSrc|ResultSrc|ImmSrc|AddressingControl|
-|------|----|--------|------|--------|-----|---------|------|-----------------|
-| 0110011 | R-type|1|0|0|00|00|000|000|
-|1100011|Branch|0|0|0|00/01*|00|010|000|
-|0010011|I-type ALU|1|1|0|00|00|000|000|
-|1101111|JAL|1|0|0|01|10|011|000|
-|0000011|Load|1|1|0|00|01|000|funct3|
-|0100011|Store|0|1|1|00|00|001|funct3|
-|1100111|JALR|1|1|0|10|10|000|000|
-|0110111|LUI|1|1|0|00|00|100|000|
+|Opcode|Type|RegWrite|ALUSrc|MemWrite|PCSrc|ResultSrc|ImmSrc|AddressingControl| Instructions |
+|------|----|--------|------|--------|-----|---------|------|-----------------|--------------|
+| 0110011 | R-type|1|0|0|00|00|000|000|`sub` `add` `sll` `slt` `sltu` `xor` `or` `and` `srl` `sra`|
+|1100011|Branch|0|0|0|00/01*|00|010|000|`beq` `bne`|
+|0010011|I-type ALU|1|1|0|00|00|000|000|`addi` `slti` `sltiu` `slli` `xori` `ori` `andi`  `srli` `srai` |
+|1101111|JAL|1|0|0|01|10|011|000|`jal`|
+|0000011|Load|1|1|0|00|01|000|funct3| `lb` `lh` `lw` `lbu` `lhu`|
+|0100011|Store|0|1|1|00|00|001|funct3|`sb` `sh` `sw`|
+|1100111|JALR|1|1|0|10|10|000|000|`jalr`|
+|0110111|LUI|1|1|0|00|00|100|000|`lui`|
 
 
 ### Memory
@@ -151,35 +151,35 @@ This is correctly extracted according to the structure predefined for I-Immediat
 - Implemented single cycle datapath by connecting together the individual components.
 - Instantiated and wired together the PC, Instruction Memory, Register File, Immediate Extend unit, ALU, Data Memory, and writeback modules. Implemented ALUSrc and ResultSrc multiplexers, PC source selection for normal, branch, JAL and JALR execution, and exposed internal signals (pc, instr, alu_result, a0) for easier debugging and verification.
 
-### F1 ASM
-```s
-main:
-    JAL ra, init
-    j   main
 
-init:
-    li s2, 0x0   
-    li s3, 0xff  # load s3 with 0xff
-    li a0, 0x0   # result reg init at 0
-    li s4, 0xf  
 
-loopi:
-    slli s2, s2, 1    # shift left by 1
-    addi s2, s2, 1    # add 1
-    and  a0, s3, s2   # and with 0x11111111 
+### Memory
 
-wait:
-    addi s4, s4, -1
-    BNE s4, zero, wait
-    addi s4, zero, 0xf
-    bne s3, s2, loopi
-    ADDI a0, zero, 0
-    RET
-```
+Early versions of the project (and Lab 4) used word-addressable memories, where each location stored a 32-bit word. That worked for LW/SW, but became awkward once we needed to support all byte and halfword load/store instructions (LB, LBU, LH, LHU, SB, SH). Word-addressable memory would have required extra masking and shifting to reconstruct sub-word accesses.
+
+To avoid this, I implemented a **byte-addressable 128 KB data memory**, where each location stores 8 bits. In this model:
+
+- Byte accesses map directly to a single entry.  
+- Halfword accesses span two consecutive entries.  
+- Word accesses span four consecutive entries.  
+
+This layout matches RISC-V little-endian ordering: the least-significant byte lives at the lowest address. The design uses the lower 17 bits of the ALU address as the memory index, giving a bounded 2¹⁷-byte space that matches the project’s memory map and remains simulation-friendly.
+
+Stores (SB/SH/SW) are synchronous, occurring on the rising clock edge, and write 1, 2, or 4 consecutive bytes. Loads (LB/LBU/LH/LHU/LW) are combinational, reconstructing data from the byte array and applying sign or zero extension based on a unified 3-bit `access_ctrl` bus: `[1:0]` encode the size (byte/halfword/word) and bit `[2]` indicates signed vs unsigned behaviour. That means the memory returns ISA-correct values directly, keeping the rest of the datapath simple.
+
+For simulation, I added a preload mechanism using `$readmemh`, which loads external `.mem` images at the base address defined by the memory map. This allows the same data memory to be reused across:
+
+- the team’s F1 starting light program  
+- the official `pdf.asm` reference program  
+- all five `tb/asm` verification programs  
+- general top level tests 
+
+and makes it easy to swap test programs without recompiling RTL.
 
 ## Design Decisions
 
 ### Addressing Control
+
 This control signal is produced by the control unit and is used to choose how we want to construct the bytes onto word in data memory. This is especially useful for instructions such as `lb`, `lh`, `sh`, `sb` where we only want to extract/store a byte or half of the word instead of the entire word.
 
 The addressing control is 3 bits wide, the MSB is to choose between signed or unsigned extension and the remaining bits are used for choosing the different modes and they are allocated for each cases as follows:
