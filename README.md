@@ -162,8 +162,12 @@ wait:
 ```
 
 ### ALU
+- Performs arithmetic/logic operations
+- 4 bit control signal to allow sufficient operations. Supports ADD, SUB, AND, OR, XOR, SLT, SLTU, SLL SRL, SRA operations. Allows for signed and unsigned. Used basic C++ testbench with functions to test all operations.
 
-
+### Regfile
+- 32 bit registers with 2 read ports and one write port.
+- Allows for asynchronous read and synchronous write on rising clock edge. x0 hardwired to 0. Simple unit testbench tested read and writing to registers, ensuring that they occur when expected (read whenever, write on rising clock edge).
 
 ### PC
 For the program counter, we initially took the approach of separate components and a top-level interface with other components; however, in the end, this proved to be tedious and overly complicated. So, we turned to a flat implementation of the program counter.
