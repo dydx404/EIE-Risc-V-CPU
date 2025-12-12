@@ -108,7 +108,7 @@ int main(int argc, char **argv, char **env)
 - The master script written in /testing/Master_test automatically configures the outputs depending on the program being run by passing arguments on execution
 
 ### Testing Write Up
-The tests for both single cycle and the pipelined CPU were written up [here](/testing/Test%20results/Testing%20Write%20up.md) and [here](/testing/Test%20results/Pipelining%20tests.md) respectively using programs specified in the testing folder.
+The tests for both single cycle and the pipelined CPU were written up [here](tb/single_cycle/test-reference/rtl_copy) and [here](tb/pipelined/Ptop) respectively using programs specified in the testing folder.
 
 ### Testing videos
 The following videos demonstrate the F1 program's functionality on a pipelined CPU with both data memory cache and instruction memory cache.
