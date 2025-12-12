@@ -180,6 +180,11 @@ For the program counter, we initially took the approach of separate components a
 ### Control Unit
 
 
+### Datapath
+- Implemented single cycle datapath by connecting together the individual components.
+- Instantiated and wired together the PC, Instruction Memory, Register File, Immediate Extend unit, ALU, Data Memory, and writeback modules. Implemented ALUSrc and ResultSrc multiplexers, PC source selection for normal, branch, JAL and JALR execution, and exposed internal signals (pc, instr, alu_result, a0) for easier debugging and verification.
+
+
 
 ### Memory
 
