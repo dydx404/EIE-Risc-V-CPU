@@ -139,47 +139,6 @@ This is correctly extracted according to the structure predefined for I-Immediat
 - Instantiated and wired together the PC, Instruction Memory, Register File, Immediate Extend unit, ALU, Data Memory, and writeback modules. Implemented ALUSrc and ResultSrc multiplexers, PC source selection for normal, branch, JAL and JALR execution, and exposed internal signals (pc, instr, alu_result, a0) for easier debugging and verification.
 
 
-
-### Memory
-
-Early versions of the project (and Lab 4) used word-addressable memories, where each location stored a 32-bit word. That worked for LW/SW, but became awkward once we needed to support all byte and halfword load/store instructions (LB, LBU, LH, LHU, SB, SH). Word-addressable memory would have required extra masking and shifting to reconstruct sub-word accesses.
-
-To avoid this, I implemented a **byte-addressable 128 KB data memory**, where each location stores 8 bits. In this model:
-
-- Byte accesses map directly to a single entry.  
-- Halfword accesses span two consecutive entries.  
-- Word accesses span four consecutive entries.  
-
-This layout matches RISC-V little-endian ordering: the least-significant byte lives at the lowest address. The design uses the lower 17 bits of the ALU address as the memory index, giving a bounded 2¹⁷-byte space that matches the project’s memory map and remains simulation-friendly.
-
-Stores (SB/SH/SW) are synchronous, occurring on the rising clock edge, and write 1, 2, or 4 consecutive bytes. Loads (LB/LBU/LH/LHU/LW) are combinational, reconstructing data from the byte array and applying sign or zero extension based on a unified 3-bit `access_ctrl` bus: `[1:0]` encode the size (byte/halfword/word) and bit `[2]` indicates signed vs unsigned behaviour. That means the memory returns ISA-correct values directly, keeping the rest of the datapath simple.
-
-For simulation, I added a preload mechanism using `$readmemh`, which loads external `.mem` images at the base address defined by the memory map. This allows the same data memory to be reused across:
-
-- the team’s F1 starting light program  
-- the official `pdf.asm` reference program  
-- all five `tb/asm` verification programs  
-- general top level tests 
-
-and makes it easy to swap test programs without recompiling RTL.
-
-## Design Decisions
-
-### Addressing Control
-
-This control signal is produced by the control unit and is used to choose how we want to construct the bytes onto word in data memory. This is especially useful for instructions such as `lb`, `lh`, `sh`, `sb` where we only want to extract/store a byte or half of the word instead of the entire word.
-
-The addressing control is 3 bits wide, the MSB is to choose between signed or unsigned extension and the remaining bits are used for choosing the different modes and they are allocated for each cases as follows:
-
-| AdddressingControl [1:0] | AddressingControl [2] | Load Instruction type | Store Instruction type |
-| -------- | :--------: | :--------: | :--------: |
-| 2'b00  | 1'b0 | `lb` | `sb` |
-| 2'b00 | 1'b1 |  `lbu` | xx |
-| 2'b01 | 1'b0 | `lh` | `sh` |
-| 2'b01 | 1'b1 | `lhu` | xx |
-| 2'b10 | xx | `lw` | `sw` |
-
-
 ### Implemented Instructions 
 
 #### R-Type
@@ -199,7 +158,7 @@ The addressing control is 3 bits wide, the MSB is to choose between signed or un
 
 ## Final Schematic for Single Cycle CPU
 
-![Single Cycle CPU Schematic](imgs/SingleCycleCpu.jpeg)
+![Single Cycle CPU Schematic](docs/imgs/SingleCycleCpu.jpeg)
 
 # Pipelined RV32I Design
 
@@ -290,21 +249,12 @@ Lw issue is solved by stalling the decode and fetch stages. As such, we must flu
 If a control hazard is detected, the execute and decode stages are flushed (2 instructions after branch instruction are flushed) before moving to correct instruction. 
 
 ## Finalised Pipelined CPU Schematic
-![Image of pipelined CPU schematic]()
+![Image of pipelined CPU schematic](docs/img/pipeline.png
+)
 
 # Cache
 
 the cache is solely developed by yi due to lacking time, see his [repo](../EIE-Risc-V-CPU/statements/YiDong.md)
-
-
-
-
-
-
-
-
-
-
 
 
 # Notes
