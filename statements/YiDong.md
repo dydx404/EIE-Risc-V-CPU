@@ -61,7 +61,7 @@ Task allocation started with a GitHub Project dashboard to visualise progress an
 
 ### Development
 
-#### Data Memory Design
+#### [Data Memory Design](../rtl/single_cycle/DataMemory/DataMemory.sv)
 
 Early versions of the project (and Lab 4) used word-addressable memories, where each location stored a 32-bit word. That worked for LW/SW, but became awkward once we needed to support all byte and halfword load/store instructions (LB, LBU, LH, LHU, SB, SH). Word-addressable memory would have required extra masking and shifting to reconstruct sub-word accesses.
 
@@ -84,7 +84,7 @@ For simulation, I added a preload mechanism using `$readmemh`, which loads exter
 
 and makes it easy to swap test programs without recompiling RTL.
 
-#### Single-Cycle Top-Level Integration
+#### [Single-Cycle Top-Level Integration](../rtl/single_cycle/top/top.sv)
 
 I implemented the **single-cycle Top** module, integrating the PC, instruction memory, control unit, immediate generator, register file, ALU, and the new byte-addressable data memory into a single-cycle RV32I datapath.
 
@@ -137,16 +137,16 @@ To validate the integrated single-cycle CPU, I helped design and/or run several 
 - [**ALU Test:**](../tb/single_cycle/test-alu)
   A compact program that builds operands using `addi` and verifies ADD, SUB, XOR, OR, AND, SLT, SLTU. Results are accumulated into `a0`, which ends at a known value (e.g. 11), confirming correct ALU behaviour and control decoding.
 
-- **“Nerfed” ALU Test (SRA/SRAI Focus):**  
+- [**“Nerfed” ALU Test (SRA/SRAI Focus):**](../tb/single_cycle/test-nerfed-alu)  
   A minimal program that stresses `sra` and `srai` using negative values (e.g. -16), ensuring the arithmetic right-shift behaves correctly and that immediate decoding matches the register version. Again, the final `a0` value is used as a single pass/fail signal.
 
-- **Load/Store Test:**  
-  A program that constructs a base pointer (e.g. `0x100`), performs a series of `sw`/`lw` operations, and checks that the loaded values match what was stored. The final sum in `a0` (e.g. 141) confirms correct memory address calculation, endianness, and DataMemory integration.
+- [**Load/Store Test:**](../tb/single_cycle/test-loadstore)  
+  A program that constructs a base pointer (e.g. `0x100`), performs a series of `sw`/`lw` operations, and checks that the loaded values match what was stored. The final sum in `a0` (e.g. 141) confirms correct memory address calculation, endianness, and DataMemory integration.immediate
 
-- **Immediate Test:**  
+- [**Immediate Test:**](../tb/single_cycle/test-immediate)  
   A test that exercises all immediate forms—`addi`, `andi`, `ori`, `xori`, `slti`, `sltiu`, shift immediates, `lui`, and PC-relative branches/jumps. This validates the Immediate Generator and control logic across all RV32I formats in one compact sequence.
 
-- **Reference Program (`pdf.asm`):**  
+- [**Reference Program (`pdf.asm`):**](../tb/single_cycle/test-reference) 
   Finally, the CPU was run against the official reference program. Correct final register and memory states, as well as correct use of subroutines (JAL), confirmed that the single-cycle core matched the expected architectural behaviour across a realistic, multi-function workload.
 
 Together, these tests gave high confidence that the single-cycle core was architecturally correct before we moved on to pipelining.
@@ -159,7 +159,7 @@ Together, these tests gave high confidence that the single-cycle core was archit
 
 #### Pipeline Stage Implementation
 
-To transition from a single-cycle core to a 5-stage pipeline, I implemented the **Execute (EX)**, **Memory (MEM)**, and **Writeback (WB)** stages and wired them into the IF–ID–EX–MEM–WB structure, using dedicated pipeline registers (ID/EX, EX/MEM, MEM/WB).
+To transition from a single-cycle core to a 5-stage pipeline, I implemented the [**Execute (EX)**](../rtl/pipelined/stages/ex_stage/), [**Memory (MEM)**](../rtl/pipelined/stages/mem_stage/), and [**Writeback (WB)**](../rtl/pipelined/stages/wb_stage/) stages and wired them into the IF–ID–EX–MEM–WB structure, using dedicated pipeline registers (ID/EX, EX/MEM, MEM/WB).
 
 The work included:
 
@@ -170,7 +170,7 @@ The work included:
 
 This modularisation turned the CPU from a monolithic block into a set of well-defined stages, each easier to reason about and verify in isolation.
 
-#### Execute (EX) Stage
+#### [Execute (EX) Stage](../rtl/pipelined/stages/ex_stage/)
 
 The Execute stage handles:
 
@@ -186,7 +186,7 @@ Two forwarding multiplexers select the actual ALU operands:
 
 `ALUSrcE` then chooses between the forwarded register operand and the sign-extended immediate. The ALU produces the arithmetic result and zero flag. The branch target is computed as `pcE + extImmE`, and the final branch decision is `branchTakenE = branchE && zeroE`, making the EX stage the point where both arithmetic and control-flow decisions are resolved.
 
-#### Memory (MEM) Stage
+#### [Memory (MEM) Stage](../rtl/pipelined/stages/mem_stage/)
 
 The MEM stage is a thin wrapper around the (now pipelined) data memory:
 
@@ -196,7 +196,7 @@ The MEM stage is a thin wrapper around the (now pipelined) data memory:
 
 By keeping this stage simple and state-light, we made it straightforward to later swap the raw DataMemory for a cache-backed two-level memory without having to modify the EX and WB stages.
 
-#### Writeback (WB) Stage
+#### [Writeback (WB) Stage](../rtl/pipelined/stages/wb_stage/)
 
 The WB stage is a pure combinational multiplexer that selects the final register write value:
 
@@ -212,19 +212,19 @@ The output (`resultW`) is written to the register file and simultaneously fed ba
 
 I wrote unit tests (Verilator + GoogleTest) for several pipeline components:
 
-- **Execute Stage:**  
+- [**Execute Stage:**](../tb/pipelined/component-test/test-execute-stage/)  
   Tested operand forwarding (from MEM and WB), ALU operation with and without immediate, store-data forwarding, and branch resolution. Specific cases forced `forwardAE/forwardBE` to each source and checked the resulting ALU output and branch behaviour.
 
-- **Hazard Unit:**  
+- [**Hazard Unit:**](../tb/pipelined/component-test/test-hazard_unit/)  
   Verified basic behaviour with no hazards (all control lines deasserted), then tested classic load-use hazards where a load in EX feeds a dependent instruction in ID. The tests confirm that IF and ID stall, EX flushes, and forwarding paths are used only when safe. Branch resolution tests checked correct flushing of decode/execute stages when `pcsrcE` is asserted.
 
-- **ID Stage:**  
+- [**ID Stage:**](../tb/pipelined/component-test/test-id_stage/)
   Confirmed that register file writes and reads behaved correctly, including enforcing `x0` as hard-wired zero. Tested decode and control-vector generation across R-type, I-type loads, S-type stores, B-type branches, JAL/JALR, and U-type instructions.
 
-- **MEM Stage:**  
+- [**MEM Stage:**](../tb/pipelined/component-test/test-mem-stage/)  
   Tested all load/store widths (byte/halfword/word) and sign behaviours, using edge cases such as `0x80` and `0x8000`, verifying both endianness and sign/zero extension. Confirmed that `memReadM` gating behaved as expected.
 
-- **Writeback Stage:**  
+- [**Writeback Stage:**](../tb/pipelined/component-test/test-wb-stage/)
   Tested all `resultSrcW` cases and ensured undefined values default safely to the ALU path, preventing accidental propagation of garbage into the register file.
 
 These unit tests gave stage-local confidence before integrating everything into the full pipelined CPU.
