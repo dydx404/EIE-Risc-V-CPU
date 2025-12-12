@@ -1,4 +1,4 @@
-# Team04-RISCV-CPU
+# Team21-RISCV-CPU
 
 [Jump](#single-cycle-rv32i-design) to Single Cycle CPU Documentation 
 
@@ -21,12 +21,13 @@
 ![CPU with Pipelining](docs/img/pipeline.png)(we also Implemented Cache, later)
 
 ## Planning
-[put all details regarding planning (for both single cycle, pipelined, and cache here)]
+The RISC-V CPU project was planned as a three-week incremental build, with the main focus on establishing a correct baseline design before introducing architectural complexity.
 
-### Pipeline
-We met as a team and began by examining the schematic for the pipelined cpu in lectures, modifying it for our own design.
+The first stage was the implementation of a single-cycle RV32I CPU, which served as the functional reference for the entire project. During this phase, the priority was correctness and clarity: defining clean module boundaries, validating control and datapath behavior, and ensuring that the processor could reliably execute the reference programs. This single-cycle design provided a stable foundation and a clear point of comparison for later extensions.
 
-Once this was done each team member was assigned a stage to work on and we began our implementation of the pipelined cpu, keeping frequent communication between team members to ensure each module interfaced correctly with one another.
+The second stage converted the single-cycle CPU into a five-stage pipelined architecture. Pipeline registers were introduced between IF, ID, EX, MEM, and WB, and the control logic was refactored accordingly. Data hazards were handled using forwarding and hazard detection, added incrementally and verified against previously working tests. The guiding principle was to reuse and adapt the existing single-cycle logic rather than redesigning the CPU from scratch.
+
+After the pipelined CPU was stable, a simple cache layer was implemented by me independently in a short time. This extension focused on integration with the existing pipeline and correct stalling behavior, rather than aggressive optimization, and was built on top of the verified pipelined design.
 
 ## Repo Structure & Logic
 
@@ -47,7 +48,7 @@ This approach provides a clear overview of our current progress, ensuring a clea
 | Module           | Yi | Mingze | Seth | Zain |
 |------------------|:--:|:------:|:----:|:----:|
 | ALU.sv           |    |        |      | L    |
-| ControlUnit.sv   |    |        | L    |      |
+| ControlUnit.sv   |  C  |        | L    |      |
 | DataMemory.sv    | L  |        |      |      |
 | Extend.sv        |    |        | L    |      |
 | InstrMem.sv      |    | L      |      |      |
@@ -101,26 +102,7 @@ Each control signal plays a specific role in directing data flow through the CPU
 
 ### Memory
 
-Early versions of the project (and Lab 4) used word-addressable memories, where each location stored a 32-bit word. That worked for LW/SW, but became awkward once we needed to support all byte and halfword load/store instructions (LB, LBU, LH, LHU, SB, SH). Word-addressable memory would have required extra masking and shifting to reconstruct sub-word accesses.
-
-To avoid this, I implemented a **byte-addressable 128 KB data memory**, where each location stores 8 bits. In this model:
-
-- Byte accesses map directly to a single entry.  
-- Halfword accesses span two consecutive entries.  
-- Word accesses span four consecutive entries.  
-
-This layout matches RISC-V little-endian ordering: the least-significant byte lives at the lowest address. The design uses the lower 17 bits of the ALU address as the memory index, giving a bounded 2¹⁷-byte space that matches the project’s memory map and remains simulation-friendly.
-
-Stores (SB/SH/SW) are synchronous, occurring on the rising clock edge, and write 1, 2, or 4 consecutive bytes. Loads (LB/LBU/LH/LHU/LW) are combinational, reconstructing data from the byte array and applying sign or zero extension based on a unified 3-bit `access_ctrl` bus: `[1:0]` encode the size (byte/halfword/word) and bit `[2]` indicates signed vs unsigned behaviour. That means the memory returns ISA-correct values directly, keeping the rest of the datapath simple.
-
-For simulation, I added a preload mechanism using `$readmemh`, which loads external `.mem` images at the base address defined by the memory map. This allows the same data memory to be reused across:
-
-- the team’s F1 starting light program  
-- the official `pdf.asm` reference program  
-- all five `tb/asm` verification programs  
-- general top level tests 
-
-and makes it easy to swap test programs without recompiling RTL.
+Early versions of the CPU used word-addressable memory, which was sufficient for LW/SW but became cumbersome when supporting byte and halfword load/store instructions. To address this, I implemented a byte-addressable 128 KB data memory, allowing natural support for all RISC-V load and store variants. Memory accesses follow little-endian ordering, with byte, halfword, and word operations spanning 1, 2, or 4 consecutive bytes respectively, indexed using the lower 17 bits of the ALU address. Stores are synchronous, while loads are combinational and return ISA-correct values directly using a unified access_ctrl signal to handle size and sign extension. A $readmemh preload mechanism was added to support multiple test programs and reference workloads without modifying or recompiling the RTL.[see more](statements/YiDong.md)
 
 ### PC
 For the program counter, we initially took the approach of separate components and a top-level interface with other components; however, in the end, this proved to be tedious and overly complicated. So, we turned to a flat implementation of the program counter.
