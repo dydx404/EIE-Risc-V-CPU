@@ -56,46 +56,9 @@ This approach provides a clear overview of our current progress, ensuring a clea
 
 ## Implementation
 
-### F1 ASM
-```s
-main:
-    JAL ra, init
-    j   main
-
-init:
-    li s2, 0x0   
-    li s3, 0xff  # load s3 with 0xff
-    li a0, 0x0   # result reg init at 0
-    li s4, 0xf  
-
-loopi:
-    slli s2, s2, 1    # shift left by 1
-    addi s2, s2, 1    # add 1
-    and  a0, s3, s2   # and with 0x11111111 
-
-wait:
-    addi s4, s4, -1
-    BNE s4, zero, wait
-    addi s4, zero, 0xf
-    bne s3, s2, loopi
-    ADDI a0, zero, 0
-    RET
-```
-
 ### ALU
 - Performs arithmetic/logic operations
 - 4 bit control signal to allow sufficient operations. Supports ADD, SUB, AND, OR, XOR, SLT, SLTU, SLL SRL, SRA operations. Allows for signed and unsigned. Used basic C++ testbench with functions to test all operations.
-
-### Regfile
-- 32 bit registers with 2 read ports and one write port.
-- Allows for asynchronous read and synchronous write on rising clock edge. x0 hardwired to 0. Simple unit testbench tested read and writing to registers, ensuring that they occur when expected (read whenever, write on rising clock edge).
-
-### PC
-For the program counter, we initially took the approach of separate components and a top-level interface with other components; however, in the end, this proved to be tedious and overly complicated. So, we turned to a flat implementation of the program counter.
-[See implementation](rtl/single_cycle/pc/PCFlat.sv)
-
----
-
 
 ### Control Unit
 The Control Unit is the **interpreter** of the CPU. It fetches the 32-bit instruction and determines the control signals required by the rest of the architecture. These control signals dictate the outputs of multiplexers, the operations executed by the ALU, and which values are passed in as operands.
@@ -130,37 +93,6 @@ Each control signal plays a specific role in directing data flow through the CPU
 |1100111|JALR|1|1|0|10|10|000|000|
 |0110111|LUI|1|1|0|00|00|100|000|
 
----
-
-### Immediate Generator
-The Immediate Generator receives:
-
-* the **full 32-bit instruction** from ROM, and
-* the **ImmSrc** signal from the Control Unit.
-
-Depending on the immediate type, bits within the range `[31:7]` are arranged differently. The Generator extracts these fields and reconstructs the appropriate immediate value using a `case()` on the ImmSrc for each of the 5 different immediate types.
-
-For example, for an **I-Immediate**, the Generator:
-
-1. Extracts bits **[31:20]**.
-2. Sign-extends the 12-bit value to 32 bits.
-
-This is correctly extracted according to the structure predefined for I-Immediates. Other immediate types follow similar patterns, each with its own bit arrangement and reconstruction rules.
-| ImmSrc | Immediate Type | Bit Concatenation 
-| -------- | :--------: | :--------: | 
-| 000| I-type | 20 x Immediate[31] + Immediate[31:20] |
-| 001| S-type| 20 x Immediate[31] + Immediate[31:25] + Immediate[11:7] |
-| 010| B-type| 20 x Immediate[31] + Immediate[7] + Immediate[30:25] + Immediate[11:8] + 0|
-| 011| J-type| 12 x Immediate[31] + Immediate[19:12] + Immediate[20] + Immediate[30:21] + 0 |
-| 100| U-type| Immediate[31:12] + 12 x 0| U-type|
-
----
-
-### Datapath
-- Implemented single cycle datapath by connecting together the individual components.
-- Instantiated and wired together the PC, Instruction Memory, Register File, Immediate Extend unit, ALU, Data Memory, and writeback modules. Implemented ALUSrc and ResultSrc multiplexers, PC source selection for normal, branch, JAL and JALR execution, and exposed internal signals (pc, instr, alu_result, a0) for easier debugging and verification.
-
-
 
 ### Memory
 
@@ -185,10 +117,69 @@ For simulation, I added a preload mechanism using `$readmemh`, which loads exter
 
 and makes it easy to swap test programs without recompiling RTL.
 
+### PC
+For the program counter, we initially took the approach of separate components and a top-level interface with other components; however, in the end, this proved to be tedious and overly complicated. So, we turned to a flat implementation of the program counter.
+[See implementation](rtl/single_cycle/pc/PCFlat.sv)
+
+### Regfile
+- 32 bit registers with 2 read ports and one write port.
+- Allows for asynchronous read and synchronous write on rising clock edge. x0 hardwired to 0. Simple unit testbench tested read and writing to registers, ensuring that they occur when expected (read whenever, write on rising clock edge).
+
+### Immediate Generator
+The Immediate Generator receives:
+
+* the **full 32-bit instruction** from ROM, and
+* the **ImmSrc** signal from the Control Unit.
+
+Depending on the immediate type, bits within the range `[31:7]` are arranged differently. The Generator extracts these fields and reconstructs the appropriate immediate value using a `case()` on the ImmSrc for each of the 5 different immediate types.
+
+For example, for an **I-Immediate**, the Generator:
+
+1. Extracts bits **[31:20]**.
+2. Sign-extends the 12-bit value to 32 bits.
+
+This is correctly extracted according to the structure predefined for I-Immediates. Other immediate types follow similar patterns, each with its own bit arrangement and reconstruction rules.
+| ImmSrc | Immediate Type | Bit Concatenation 
+| -------- | :--------: | :--------: | 
+| 000| I-type | 20 x Immediate[31] + Immediate[31:20] |
+| 001| S-type| 20 x Immediate[31] + Immediate[31:25] + Immediate[11:7] |
+| 010| B-type| 20 x Immediate[31] + Immediate[7] + Immediate[30:25] + Immediate[11:8] + 0|
+| 011| J-type| 12 x Immediate[31] + Immediate[19:12] + Immediate[20] + Immediate[30:21] + 0 |
+| 100| U-type| Immediate[31:12] + 12 x 0| U-type|
+
+### Datapath
+- Implemented single cycle datapath by connecting together the individual components.
+- Instantiated and wired together the PC, Instruction Memory, Register File, Immediate Extend unit, ALU, Data Memory, and writeback modules. Implemented ALUSrc and ResultSrc multiplexers, PC source selection for normal, branch, JAL and JALR execution, and exposed internal signals (pc, instr, alu_result, a0) for easier debugging and verification.
+
+### F1 ASM
+```s
+main:
+    JAL ra, init
+    j   main
+
+init:
+    li s2, 0x0   
+    li s3, 0xff  # load s3 with 0xff
+    li a0, 0x0   # result reg init at 0
+    li s4, 0xf  
+
+loopi:
+    slli s2, s2, 1    # shift left by 1
+    addi s2, s2, 1    # add 1
+    and  a0, s3, s2   # and with 0x11111111 
+
+wait:
+    addi s4, s4, -1
+    BNE s4, zero, wait
+    addi s4, zero, 0xf
+    bne s3, s2, loopi
+    ADDI a0, zero, 0
+    RET
+```
+
 ## Design Decisions
 
 ### Addressing Control
-
 This control signal is produced by the control unit and is used to choose how we want to construct the bytes onto word in data memory. This is especially useful for instructions such as `lb`, `lh`, `sh`, `sb` where we only want to extract/store a byte or half of the word instead of the entire word.
 
 The addressing control is 3 bits wide, the MSB is to choose between signed or unsigned extension and the remaining bits are used for choosing the different modes and they are allocated for each cases as follows:
