@@ -10,7 +10,7 @@
 - **Yi Dong** (yi.dong23@imperial.ac.uk)  
   - [Yi Dong's Statement](statements/YiDong.md)
 - **Seth Gobina** (seth.gobina24@imperial.ac.uk)  
-  - [Seth Gobina's Statement](statements/SethGobina.md)
+  - [Seth Gobina's Statement](statements/SethGobina/SethGobina.md)
 - **Zain Asif** (zain.asif23@imperial.ac.uk)  
   - [Zain Asif's Statement](statements/ZainAsif.md)
 - **Mingze Chen** (mingze.chen24@imperial.ac.uk)  
