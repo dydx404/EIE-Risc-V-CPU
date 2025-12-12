@@ -180,6 +180,11 @@ For the program counter, we initially took the approach of separate components a
 ### Control Unit
 
 
+### Datapath
+- Implemented single cycle datapath by connecting together the individual components.
+- Instantiated and wired together the PC, Instruction Memory, Register File, Immediate Extend unit, ALU, Data Memory, and writeback modules. Implemented ALUSrc and ResultSrc multiplexers, PC source selection for normal, branch, JAL and JALR execution, and exposed internal signals (pc, instr, alu_result, a0) for easier debugging and verification.
+
+
 
 ### Memory
 
@@ -318,6 +323,10 @@ The hazard unit produces `StallFetch`, `StallDecode`, `FlushExecute`, `FlushDeco
 
 Each pipeline is in its own module, and those that are flushed / stalled at some point have internal signals to control that. 
 Each stage is in its own module; the inputs to the module are those that are actually used for computing some value in that stage, while those that aren't used are connected directly to the next pipeline in the [top level module](rtl_pipelined/pipelined_cpu.sv). 
+
+### Pipeline Registers
+- Pipeline registers were implemented between each stage to seperate datapath and control signals across cycles.
+- Created IF/ID (Instruction Fetch/Decode), ID/EX (Decode/Execute), EX/MEM (Execute/Memory), and MEM/WB (Memory/Writeback) register modules to latch both data signals and control signals. Each register supports stall (holding state) and flush (inserting bubble) so hazard unit can handle data and control hazards.
 
 ### Hazard Unit
 
