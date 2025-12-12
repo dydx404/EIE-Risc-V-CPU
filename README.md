@@ -28,7 +28,7 @@ This approach provides a clear overview of our current progress, ensuring a clea
 
 ## Overall CPU Schematic
 
-![CPU with Pipelining](/imgs/)
+![CPU with Pipelining](../EIE-Risc-V-CPU/docs/img/pipeline.png)(we also Implemented Cache, later)
 
 ## Testing the CPU
 
@@ -125,9 +125,49 @@ The following videos demonstrate the F1 program's functionality on a pipelined C
 [Triangle](https://github.com/dydx404/EIE-Risc-V-CPU/tree/main/statements/MingzeChen/video/Triangle.mp4)
  
 
-# Single Cycle RV32I Design
+# ![Single Cycle RV32I Design](../EIE-Risc-V-CPU/docs/img/single%20cycle.png)
 
 Legend: `L` = Lead `C` = Contributor
+## Single Cycle RV32I Design
+## Single-Cycle RV32I Design – SystemVerilog Modules
+
+| Module           | Yi | Mingze | Seth | Zain |
+|------------------|:--:|:------:|:----:|:----:|
+| ALU.sv           | L  |        | C    |      |
+| ControlUnit.sv   | L  |        |      | C    |
+| DataMemory.sv    | L  |        | C    |      |
+| Extend.sv        | L  |        |      |      |
+| InstrMem.sv      |    | C      |      | L    |
+| PCFlat.sv        |    | C      |      | L    |
+| RegFile.sv       |    | C      | L    |      |
+| top.sv           | L  |        | C    |      |
+
+**Legend:**  
+- **L** = Lead  
+- **C** = Contributor
+
+## Pipelined RV32I Design – Core Pipeline Structure
+
+| Module            | Yi | Mingze | Seth | Zain |
+|-------------------|:--:|:------:|:----:|:----:|
+| fetch.sv          | L  |        |      |      |
+| Decode.sv         | L  |        |      |      |
+| EXECUTE_STAGE.sv  | L  |        | C    |      |
+| MEM_STAGE.sv      | L  |        | C    |      |
+| WB_STAGE.sv       | L  |        |      |      |
+| IF_ID.sv          |    | C      |      |      |
+| ID_EX.sv          |    | C      |      |      |
+| EX_MEM.sv         |    | C      |      |      |
+| MEM_WB.sv         |    | C      |      |      |
+| HazardUnit.sv     | L  |        | C    |      |
+| PipelineTop.sv    | L  |        | C    |      |
+
+**Legend:**  
+- **L** = Lead  
+- **C** = Contributor
+
+
+
 
 ## Planning
 
