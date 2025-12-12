@@ -43,7 +43,6 @@ As the Repository Master and Lead Developer, I led the architectural design, imp
     - [Improvements for the Future](#improvements-for-the-future)
     - [Key Takeaways](#key-takeaways)
   - [9. Commit Records](#9-commit-records)
-  - [Commit Appendix](#commit-appendix)
 
 ---
 
@@ -61,7 +60,7 @@ Task allocation started with a GitHub Project dashboard to visualise progress an
 
 ### Development
 
-#### [Data Memory Design](../rtl/single_cycle/DataMemory/DataMemory.sv)
+#### Data Memory Design
 
 Early versions of the project (and Lab 4) used word-addressable memories, where each location stored a 32-bit word. That worked for LW/SW, but became awkward once we needed to support all byte and halfword load/store instructions (LB, LBU, LH, LHU, SB, SH). Word-addressable memory would have required extra masking and shifting to reconstruct sub-word accesses.
 
@@ -84,7 +83,7 @@ For simulation, I added a preload mechanism using `$readmemh`, which loads exter
 
 and makes it easy to swap test programs without recompiling RTL.
 
-#### [Single-Cycle Top-Level Integration](../rtl/single_cycle/top/top.sv)
+#### Single-Cycle Top-Level Integration
 
 I implemented the **single-cycle Top** module, integrating the PC, instruction memory, control unit, immediate generator, register file, ALU, and the new byte-addressable data memory into a single-cycle RV32I datapath.
 
@@ -97,8 +96,6 @@ Each instruction flows through the classic five conceptual stages—fetch, decod
 - **Writeback:** A result multiplexer selects among ALU result, load data, and `pc+4` for register writeback.
 
 The main challenges here were aligning control signals across modules implemented by different team members and keeping the top-level wiring readable. My contribution included standardising signal names and ensuring that the Control Unit, Immediate Generator, and DataMemory agreed on encodings (e.g. for addressing modes and result selection).
-
-![Single-cycle datapath](../docs/img/single%20cycle.png)
 
 #### Control Unit Contribution [^p]
 
@@ -136,19 +133,19 @@ I also supported unit verification for the **Control Unit** and **Immediate Gene
 
 To validate the integrated single-cycle CPU, I helped design and/or run several focused assembly programs:
 
-- [**ALU Test:**](../tb/single_cycle/test-alu)
+- **ALU Test:**  
   A compact program that builds operands using `addi` and verifies ADD, SUB, XOR, OR, AND, SLT, SLTU. Results are accumulated into `a0`, which ends at a known value (e.g. 11), confirming correct ALU behaviour and control decoding.
 
-- [**“Nerfed” ALU Test (SRA/SRAI Focus):**](../tb/single_cycle/test-nerfed-alu)  
+- **“Nerfed” ALU Test (SRA/SRAI Focus):**  
   A minimal program that stresses `sra` and `srai` using negative values (e.g. -16), ensuring the arithmetic right-shift behaves correctly and that immediate decoding matches the register version. Again, the final `a0` value is used as a single pass/fail signal.
 
-- [**Load/Store Test:**](../tb/single_cycle/test-loadstore)  
-  A program that constructs a base pointer (e.g. `0x100`), performs a series of `sw`/`lw` operations, and checks that the loaded values match what was stored. The final sum in `a0` (e.g. 141) confirms correct memory address calculation, endianness, and DataMemory integration.immediate
+- **Load/Store Test:**  
+  A program that constructs a base pointer (e.g. `0x100`), performs a series of `sw`/`lw` operations, and checks that the loaded values match what was stored. The final sum in `a0` (e.g. 141) confirms correct memory address calculation, endianness, and DataMemory integration.
 
-- [**Immediate Test:**](../tb/single_cycle/test-immediate)  
+- **Immediate Test:**  
   A test that exercises all immediate forms—`addi`, `andi`, `ori`, `xori`, `slti`, `sltiu`, shift immediates, `lui`, and PC-relative branches/jumps. This validates the Immediate Generator and control logic across all RV32I formats in one compact sequence.
 
-- [**Reference Program (`pdf.asm`):**](../tb/single_cycle/test-reference) 
+- **Reference Program (`pdf.asm`):**  
   Finally, the CPU was run against the official reference program. Correct final register and memory states, as well as correct use of subroutines (JAL), confirmed that the single-cycle core matched the expected architectural behaviour across a realistic, multi-function workload.
 
 Together, these tests gave high confidence that the single-cycle core was architecturally correct before we moved on to pipelining.
@@ -161,7 +158,7 @@ Together, these tests gave high confidence that the single-cycle core was archit
 
 #### Pipeline Stage Implementation
 
-To transition from a single-cycle core to a 5-stage pipeline, I implemented the [**Execute (EX)**](../rtl/pipelined/stages/ex_stage/), [**Memory (MEM)**](../rtl/pipelined/stages/mem_stage/), and [**Writeback (WB)**](../rtl/pipelined/stages/wb_stage/) stages and wired them into the IF–ID–EX–MEM–WB structure, using dedicated pipeline registers (ID/EX, EX/MEM, MEM/WB).
+To transition from a single-cycle core to a 5-stage pipeline, I implemented the **Execute (EX)**, **Memory (MEM)**, and **Writeback (WB)** stages and wired them into the IF–ID–EX–MEM–WB structure, using dedicated pipeline registers (ID/EX, EX/MEM, MEM/WB).
 
 The work included:
 
@@ -172,7 +169,7 @@ The work included:
 
 This modularisation turned the CPU from a monolithic block into a set of well-defined stages, each easier to reason about and verify in isolation.
 
-#### [Execute (EX) Stage](../rtl/pipelined/stages/ex_stage/)
+#### Execute (EX) Stage
 
 The Execute stage handles:
 
@@ -188,7 +185,7 @@ Two forwarding multiplexers select the actual ALU operands:
 
 `ALUSrcE` then chooses between the forwarded register operand and the sign-extended immediate. The ALU produces the arithmetic result and zero flag. The branch target is computed as `pcE + extImmE`, and the final branch decision is `branchTakenE = branchE && zeroE`, making the EX stage the point where both arithmetic and control-flow decisions are resolved.
 
-#### [Memory (MEM) Stage](../rtl/pipelined/stages/mem_stage/)
+#### Memory (MEM) Stage
 
 The MEM stage is a thin wrapper around the (now pipelined) data memory:
 
@@ -198,7 +195,7 @@ The MEM stage is a thin wrapper around the (now pipelined) data memory:
 
 By keeping this stage simple and state-light, we made it straightforward to later swap the raw DataMemory for a cache-backed two-level memory without having to modify the EX and WB stages.
 
-#### [Writeback (WB) Stage](../rtl/pipelined/stages/wb_stage/)
+#### Writeback (WB) Stage
 
 The WB stage is a pure combinational multiplexer that selects the final register write value:
 
@@ -214,19 +211,19 @@ The output (`resultW`) is written to the register file and simultaneously fed ba
 
 I wrote unit tests (Verilator + GoogleTest) for several pipeline components:
 
-- [**Execute Stage:**](../tb/pipelined/component-test/test-execute-stage/)  
+- **Execute Stage:**  
   Tested operand forwarding (from MEM and WB), ALU operation with and without immediate, store-data forwarding, and branch resolution. Specific cases forced `forwardAE/forwardBE` to each source and checked the resulting ALU output and branch behaviour.
 
-- [**Hazard Unit:**](../tb/pipelined/component-test/test-hazard_unit/)  
+- **Hazard Unit:**  
   Verified basic behaviour with no hazards (all control lines deasserted), then tested classic load-use hazards where a load in EX feeds a dependent instruction in ID. The tests confirm that IF and ID stall, EX flushes, and forwarding paths are used only when safe. Branch resolution tests checked correct flushing of decode/execute stages when `pcsrcE` is asserted.
 
-- [**ID Stage:**](../tb/pipelined/component-test/test-id_stage/)
+- **ID Stage:**  
   Confirmed that register file writes and reads behaved correctly, including enforcing `x0` as hard-wired zero. Tested decode and control-vector generation across R-type, I-type loads, S-type stores, B-type branches, JAL/JALR, and U-type instructions.
 
-- [**MEM Stage:**](../tb/pipelined/component-test/test-mem-stage/)  
+- **MEM Stage:**  
   Tested all load/store widths (byte/halfword/word) and sign behaviours, using edge cases such as `0x80` and `0x8000`, verifying both endianness and sign/zero extension. Confirmed that `memReadM` gating behaved as expected.
 
-- [**Writeback Stage:**](../tb/pipelined/component-test/test-wb-stage/)
+- **Writeback Stage:**  
   Tested all `resultSrcW` cases and ensured undefined values default safely to the ALU path, preventing accidental propagation of garbage into the register file.
 
 These unit tests gave stage-local confidence before integrating everything into the full pipelined CPU.
@@ -459,7 +456,7 @@ Beyond core RTL work, I also:
 
 - Helped define and maintain coding style and file structure conventions across the team.  
 - Contributed to Vbuddy testbenches and visualisation setups, especially for earlier labs and for simple single-cycle demos.  
-- Create the Team Final Statements 
+- Wrote documentation and comments describing how to run tests, how the memory preload mechanism works, and how to interpret debug traces.  
 - Assisted teammates in debugging their modules (e.g. aligning control encodings and resolving off-by-one or sign-extension bugs).
 
 These “infrastructure” tasks were less visible than the main CPU pipeline, but they significantly reduced friction in day-to-day development.
@@ -499,63 +496,5 @@ If I were to repeat this project, I would:
 The commit history in these branches documents both the incremental implementation of modules and the iterative debugging process (e.g. hazard fixes, forwarding corrections, and cache integration adjustments). Together, they provide an auditable record of my role in the project.
 
 ---
-## Commit Appendix
-
-| Commit ID | Date | Commit Description |
-|-----------|------|--------------------|
-| 343acc4 | 2025-12-11 | Remove README to prepare for merge |
-| 5cd5cfe | 2025-12-11 | updated statements |
-| 9197cdf | 2025-12-10 | docs: progress on individual contribution statement |
-| 67fcc0f | 2025-12-10 | On cache-rebuild: temp: cache + statement mixed WIP |
-| 08ae5f0 | 2025-12-10 | index on cache-rebuild: 0935cd6 first 4 test good |
-| d8a4b14 | 2025-12-10 | untracked files on cache-rebuild: 0935cd6 first 4 test good |
-| 6e28374 | 2025-12-10 | WIP: cache pipeline + testbench + program.mem updates |
-| 0935cd6 | 2025-12-09 | first 4 test good |
-| c2ef213 | 2025-12-08 | Cache rebuild baseline: pipeline + debug + corrected test program |
-| 752985c | 2025-12-08 | First four test correct |
-| 5f1607e | 2025-12-08 | minimal model |
-| fab2db9 | 2025-12-08 | small fix |
-| 945387d | 2025-12-08 | small fix |
-| 212f364 | 2025-12-07 | Fix regfile debug exposure and improve WB testbench observability |
-| bf82fac | 2025-12-07 | Pipeline bring-up: ALU/addi verified, WB path correct, PC stepping validated via IF trace |
-| a357767 | 2025-12-07 | WIP: pipeline top integration and hazard rewiring |
-| 61a0057 | 2025-12-07 | WIP: pipeline top integration, wiring pass in progress |
-| 5ddab16 | 2025-12-07 | Fix true load-use hazard detection and add HazardUnit gtest |
-| 85b793a | 2025-12-07 | Fix Decode memReadD signal and update gtest for load-use support |
-| 25fff89 | 2025-12-07 | test(wb): verify writeback stage mux for alu mem and PC+4 |
-| b90e80a | 2025-12-07 | test(mem): verify MEM stage; load/store widths and sign extension |
-| f7845c4 | 2025-12-07 | test(ex): verify Execute stage; forwarding, ALUSrc, and branchTaken logic |
-| f30a37c | 2025-12-07 | test(id): verify Decode stage; assert branchD and fix funct7 wiring |
-| a02f06f | 2025-12-07 | test(pipelined): scaffold full component verification structure |
-| b2eddff | 2025-11-30 | Add Execute stage with forwarding and ALU muxing |
-| 626e3ef | 2025-11-30 | Add MEM_STAGE and DataMemory to mem-stage branch |
-| ca9afbb | 2025-11-30 | Add MEM_STAGE, DataMemory copy, WB_STAGE |
-| 32a9666 | 2025-11-29 | Fix DMEM preload, add MemRead support, fix control path, test-reference integration |
-| 2fd7152 | 2025-11-28 | test-reference: added DataMemory preload, program.mem, gaussian.mem, and full test setup |
-| 598986f | 2025-11-28 | Overwrite test-reference with fresh copy from test-general |
-| c98514b | 2025-11-28 | Full general test program and verification output |
-| 85b516f | 2025-11-28 | Add full SRA/SRAI correctness test and verification |
-| 67f977b | 2025-11-28 | nerfed arithmatic program test |
-| dc4d4a6 | 2025-11-28 | Add regfile-zero test (x0 behaviour verified) |
-| 645a4df | 2025-11-28 | Merge branch 'feature/test-immediate' into feature/test-immediate |
-| f0becd2 | 2025-11-28 | Add immediate-format test (SRAI still failing, others OK) |
-| 6dfb968 | 2025-11-28 | Add ALU test (exposes SRAI bug) |
-| 01c93eb | 2025-11-28 | Add load/store test program and testbench for feature/test-loadstore |
-| 97ad589 | 2025-11-28 | Add program.s for branch test |
-| 4f7d595 | 2025-11-26 | Add standalone top-level CPU integration and testbench (top.sv, top_tb.cpp, program.mem, doit.sh) |
-| 022e2da | 2025-11-26 | Resolve conflict: keep CU_verification version of ControlUnit.sv |
-| 8a55383 | 2025-11-26 | Fix CU + GTest + doit.sh working version |
-| f4034d4 | 2025-11-25 | Add GoogleTest verification suite for ControlUnit |
-| c9e8fa9 | 2025-11-25 | Extend verification: add full testbench, updated Extend module, and PC/doit fix |
-| 5f4dff8 | 2025-11-24 | Add new DataMemory design |
-| c3f076c | 2025-11-20 | fix structure (merge develop) |
-| 73d9cab | 2025-11-20 | Restore folder structure from commit a06638c |
-| ba71dae | 2025-11-20 | Merge develop → main to preserve file system |
-| 0e71153 | 2025-11-20 | Add DataMemory module and complete unit verification |
-| 9bd1968 | 2025-11-18 | Add develop branch, PR/issue templates, improved README |
-| a06638c | 2025-11-18 | Add complete folder structure and README placeholders |
-| fa43638 | 2025-11-18 | Add project structure, tasks, contribution docs |
-| 98dde8b | 2025-11-18 | Initial project structure for RISC-V CPU |
-
 
 [^p]: *Partial credit / supporting role.*

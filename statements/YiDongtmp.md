@@ -4,28 +4,28 @@ As the Repository Master and Lead Developer, I led the architectural design, imp
 
 ---
 
-# Yi's Contribution Index
+# Yi's Contribution Index {#top}
 
 - [Overview](#overview)
-- [Yi's Contribution Index](#yis-contribution-index)
-  - [1. Workflow Development](#1-workflow-development)
-  - [2. Single-Cycle CPU](#2-single-cycle-cpu)
-    - [Development](#development)
+- [Yi's Contribution Index {#top}](#yis-contribution-index-top)
+  - [1. Workflow Development {#1-workflow-development}](#1-workflow-development-1-workflow-development)
+  - [2. Single-Cycle CPU {#2-single-cycle-cpu}](#2-single-cycle-cpu-2-single-cycle-cpu)
+    - [Development {#development-sc}](#development-development-sc)
       - [Data Memory Design](#data-memory-design)
       - [Single-Cycle Top-Level Integration](#single-cycle-top-level-integration)
       - [Control Unit Contribution \[^p\]](#control-unit-contribution-p)
-    - [Unit Verifications](#unit-verifications)
-    - [CPU-Level Verifications](#cpu-level-verifications)
-  - [3. Pipelined CPU](#3-pipelined-cpu)
-    - [Development](#development-1)
+    - [Unit Verifications {#unit-verifications-sc}](#unit-verifications-unit-verifications-sc)
+    - [CPU-Level Verifications {#cpu-level-verifications-sc}](#cpu-level-verifications-cpu-level-verifications-sc)
+  - [3. Pipelined CPU {#3-pipelined-cpu}](#3-pipelined-cpu-3-pipelined-cpu)
+    - [Development {#development-pl}](#development-development-pl)
       - [Pipeline Stage Implementation](#pipeline-stage-implementation)
       - [Execute (EX) Stage](#execute-ex-stage)
       - [Memory (MEM) Stage](#memory-mem-stage)
       - [Writeback (WB) Stage](#writeback-wb-stage)
-    - [Unit Verifications](#unit-verifications-1)
-    - [Pipeline-Level Verifications](#pipeline-level-verifications)
-  - [4. Cache System](#4-cache-system)
-    - [Development](#development-2)
+    - [Unit Verifications {#unit-verifications-pl}](#unit-verifications-unit-verifications-pl)
+    - [Pipeline-Level Verifications {#pipeline-level-verifications-pl}](#pipeline-level-verifications-pipeline-level-verifications-pl)
+  - [4. Cache System {#4-cache-system}](#4-cache-system-4-cache-system)
+    - [Development {#development-cache}](#development-development-cache)
       - [4.1 Baseline: Behaviour Required from the Cache](#41-baseline-behaviour-required-from-the-cache)
       - [4.2 MainMemory: Simple 8 KB Word Store](#42-mainmemory-simple-8-kb-word-store)
       - [4.3 DataCache Geometry and Organisation](#43-datacache-geometry-and-organisation)
@@ -33,35 +33,35 @@ As the Repository Master and Lead Developer, I led the architectural design, imp
       - [4.5 Write Policy and Partial Stores](#45-write-policy-and-partial-stores)
       - [4.6 Load Semantics and Byte/Halfword Extraction](#46-load-semantics-and-bytehalfword-extraction)
       - [4.7 Miss Handling and Stall Protocol](#47-miss-handling-and-stall-protocol)
-    - [Verifications](#verifications)
-  - [5. Mistakes I Made](#5-mistakes-i-made)
-  - [6. Key Design Decisions](#6-key-design-decisions)
-  - [7. Other Contributions](#7-other-contributions)
-  - [8. Reflections](#8-reflections)
-    - [What I Learned](#what-i-learned)
-    - [Mistakes \& Corrections](#mistakes--corrections)
-    - [Improvements for the Future](#improvements-for-the-future)
-    - [Key Takeaways](#key-takeaways)
-  - [9. Commit Records](#9-commit-records)
-  - [Commit Appendix](#commit-appendix)
+    - [Verifications {#verifications-cache}](#verifications-verifications-cache)
+  - [5. Mistakes I Made {#5-mistakes-i-made}](#5-mistakes-i-made-5-mistakes-i-made)
+  - [6. Key Design Decisions {#6-key-design-decisions}](#6-key-design-decisions-6-key-design-decisions)
+  - [7. Other Contributions {#7-other-contributions}](#7-other-contributions-7-other-contributions)
+  - [8. Reflections {#8-reflections}](#8-reflections-8-reflections)
+    - [What I Learned {#what-i-learned}](#what-i-learned-what-i-learned)
+    - [Mistakes \& Corrections {#mistakes--corrections}](#mistakes--corrections-mistakes--corrections)
+    - [Improvements for the Future {#improvements-for-the-future}](#improvements-for-the-future-improvements-for-the-future)
+    - [Key Takeaways {#key-takeaways}](#key-takeaways-key-takeaways)
+  - [9. Commit Records {#9-commit-records}](#9-commit-records-9-commit-records)
 
 ---
 
-## 1. Workflow Development
+## 1. Workflow Development {#1-workflow-development}
 
 I designed and enforced a structured Git workflow to support parallel development, verification traceability, and safe system integration across the team. The repository is organised with a clear separation between RTL (`rtl/`), testbenches (`tb/`), RISC-V software (`sw/`), documentation (`docs/`), and tooling, which keeps the project scalable and easy to navigate.
 
 We adopted a feature-branch model (`feature/*`), with `main` reserved strictly for stable, reviewed code. Non-trivial changes were integrated via Pull Requests, using PR/Issue templates to standardise documentation, encourage review (when available), and require basic verification evidence before merge. Branch protection rules prevented direct commits to `main`, reducing regression risk and preserving a readable project history.
 
-Task allocation started with a GitHub Project dashboard to visualise progress and ownership. As the CPU evolved into a pipelined, cached design, technical dependencies between features (e.g. hazards, forwarding, cache stalls) made work more coupled than initially expected, so we increasingly fell back to more direct coordination. Overall, the workflow emphasised isolating experimental work, controlled integration, and verifiable development—mirroring a professional hardware–software co-design environment.
+Task allocation started with a GitHub Project dashboard to visualise progress and ownership. As the CPU evolved into a pipelined, cached design, technical dependencies between features (e.g. hazards, forwarding, cache stalls) made work more coupled than initially expected, so we increasingly fell back to more direct coordination. Overall, the workflow emphasised isolating experimental work, controlled integration, and verifiable development—mirroring a professional hardware–software co-design environment. :contentReference[oaicite:1]{index=1}  
 
 ---
 
-## 2. Single-Cycle CPU
+## 2. Single-Cycle CPU {#2-single-cycle-cpu}
 
-### Development
+### Development {#development-sc}
 
-#### [Data Memory Design](../rtl/single_cycle/DataMemory/DataMemory.sv)
+#### Data Memory Design
+
 
 Early versions of the project (and Lab 4) used word-addressable memories, where each location stored a 32-bit word. That worked for LW/SW, but became awkward once we needed to support all byte and halfword load/store instructions (LB, LBU, LH, LHU, SB, SH). Word-addressable memory would have required extra masking and shifting to reconstruct sub-word accesses.
 
@@ -82,9 +82,9 @@ For simulation, I added a preload mechanism using `$readmemh`, which loads exter
 - all five `tb/asm` verification programs  
 - general top level tests 
 
-and makes it easy to swap test programs without recompiling RTL.
+and makes it easy to swap test programs without recompiling RTL. :contentReference[oaicite:2]{index=2}  
 
-#### [Single-Cycle Top-Level Integration](../rtl/single_cycle/top/top.sv)
+#### Single-Cycle Top-Level Integration
 
 I implemented the **single-cycle Top** module, integrating the PC, instruction memory, control unit, immediate generator, register file, ALU, and the new byte-addressable data memory into a single-cycle RV32I datapath.
 
@@ -97,8 +97,6 @@ Each instruction flows through the classic five conceptual stages—fetch, decod
 - **Writeback:** A result multiplexer selects among ALU result, load data, and `pc+4` for register writeback.
 
 The main challenges here were aligning control signals across modules implemented by different team members and keeping the top-level wiring readable. My contribution included standardising signal names and ensuring that the Control Unit, Immediate Generator, and DataMemory agreed on encodings (e.g. for addressing modes and result selection).
-
-![Single-cycle datapath](../docs/img/single%20cycle.png)
 
 #### Control Unit Contribution [^p]
 
@@ -115,7 +113,7 @@ This unified control scheme is reused unchanged in the transition to the pipelin
 
 ---
 
-### Unit Verifications
+### Unit Verifications {#unit-verifications-sc}
 
 I verified the DataMemory using a Verilator + GoogleTest unit testbench that directly exercised all RV32I load/store widths and sign behaviours. The tests covered:
 
@@ -132,36 +130,36 @@ I also supported unit verification for the **Control Unit** and **Immediate Gene
 
 ---
 
-### CPU-Level Verifications
+### CPU-Level Verifications {#cpu-level-verifications-sc}
 
 To validate the integrated single-cycle CPU, I helped design and/or run several focused assembly programs:
 
-- [**ALU Test:**](../tb/single_cycle/test-alu)
+- **ALU Test:**  
   A compact program that builds operands using `addi` and verifies ADD, SUB, XOR, OR, AND, SLT, SLTU. Results are accumulated into `a0`, which ends at a known value (e.g. 11), confirming correct ALU behaviour and control decoding.
 
-- [**“Nerfed” ALU Test (SRA/SRAI Focus):**](../tb/single_cycle/test-nerfed-alu)  
+- **“Nerfed” ALU Test (SRA/SRAI Focus):**  
   A minimal program that stresses `sra` and `srai` using negative values (e.g. -16), ensuring the arithmetic right-shift behaves correctly and that immediate decoding matches the register version. Again, the final `a0` value is used as a single pass/fail signal.
 
-- [**Load/Store Test:**](../tb/single_cycle/test-loadstore)  
-  A program that constructs a base pointer (e.g. `0x100`), performs a series of `sw`/`lw` operations, and checks that the loaded values match what was stored. The final sum in `a0` (e.g. 141) confirms correct memory address calculation, endianness, and DataMemory integration.immediate
+- **Load/Store Test:**  
+  A program that constructs a base pointer (e.g. `0x100`), performs a series of `sw`/`lw` operations, and checks that the loaded values match what was stored. The final sum in `a0` (e.g. 141) confirms correct memory address calculation, endianness, and DataMemory integration.
 
-- [**Immediate Test:**](../tb/single_cycle/test-immediate)  
+- **Immediate Test:**  
   A test that exercises all immediate forms—`addi`, `andi`, `ori`, `xori`, `slti`, `sltiu`, shift immediates, `lui`, and PC-relative branches/jumps. This validates the Immediate Generator and control logic across all RV32I formats in one compact sequence.
 
-- [**Reference Program (`pdf.asm`):**](../tb/single_cycle/test-reference) 
+- **Reference Program (`pdf.asm`):**  
   Finally, the CPU was run against the official reference program. Correct final register and memory states, as well as correct use of subroutines (JAL), confirmed that the single-cycle core matched the expected architectural behaviour across a realistic, multi-function workload.
 
 Together, these tests gave high confidence that the single-cycle core was architecturally correct before we moved on to pipelining.
 
 ---
 
-## 3. Pipelined CPU
+## 3. Pipelined CPU {#3-pipelined-cpu}
 
-### Development
+### Development {#development-pl}
 
 #### Pipeline Stage Implementation
 
-To transition from a single-cycle core to a 5-stage pipeline, I implemented the [**Execute (EX)**](../rtl/pipelined/stages/ex_stage/), [**Memory (MEM)**](../rtl/pipelined/stages/mem_stage/), and [**Writeback (WB)**](../rtl/pipelined/stages/wb_stage/) stages and wired them into the IF–ID–EX–MEM–WB structure, using dedicated pipeline registers (ID/EX, EX/MEM, MEM/WB).
+To transition from a single-cycle core to a 5-stage pipeline, I implemented the **Execute (EX)**, **Memory (MEM)**, and **Writeback (WB)** stages and wired them into the IF–ID–EX–MEM–WB structure, using dedicated pipeline registers (ID/EX, EX/MEM, MEM/WB). :contentReference[oaicite:3]{index=3}  
 
 The work included:
 
@@ -172,7 +170,7 @@ The work included:
 
 This modularisation turned the CPU from a monolithic block into a set of well-defined stages, each easier to reason about and verify in isolation.
 
-#### [Execute (EX) Stage](../rtl/pipelined/stages/ex_stage/)
+#### Execute (EX) Stage
 
 The Execute stage handles:
 
@@ -188,7 +186,7 @@ Two forwarding multiplexers select the actual ALU operands:
 
 `ALUSrcE` then chooses between the forwarded register operand and the sign-extended immediate. The ALU produces the arithmetic result and zero flag. The branch target is computed as `pcE + extImmE`, and the final branch decision is `branchTakenE = branchE && zeroE`, making the EX stage the point where both arithmetic and control-flow decisions are resolved.
 
-#### [Memory (MEM) Stage](../rtl/pipelined/stages/mem_stage/)
+#### Memory (MEM) Stage
 
 The MEM stage is a thin wrapper around the (now pipelined) data memory:
 
@@ -198,7 +196,7 @@ The MEM stage is a thin wrapper around the (now pipelined) data memory:
 
 By keeping this stage simple and state-light, we made it straightforward to later swap the raw DataMemory for a cache-backed two-level memory without having to modify the EX and WB stages.
 
-#### [Writeback (WB) Stage](../rtl/pipelined/stages/wb_stage/)
+#### Writeback (WB) Stage
 
 The WB stage is a pure combinational multiplexer that selects the final register write value:
 
@@ -210,30 +208,30 @@ The output (`resultW`) is written to the register file and simultaneously fed ba
 
 ---
 
-### Unit Verifications
+### Unit Verifications {#unit-verifications-pl}
 
 I wrote unit tests (Verilator + GoogleTest) for several pipeline components:
 
-- [**Execute Stage:**](../tb/pipelined/component-test/test-execute-stage/)  
+- **Execute Stage:**  
   Tested operand forwarding (from MEM and WB), ALU operation with and without immediate, store-data forwarding, and branch resolution. Specific cases forced `forwardAE/forwardBE` to each source and checked the resulting ALU output and branch behaviour.
 
-- [**Hazard Unit:**](../tb/pipelined/component-test/test-hazard_unit/)  
+- **Hazard Unit:**  
   Verified basic behaviour with no hazards (all control lines deasserted), then tested classic load-use hazards where a load in EX feeds a dependent instruction in ID. The tests confirm that IF and ID stall, EX flushes, and forwarding paths are used only when safe. Branch resolution tests checked correct flushing of decode/execute stages when `pcsrcE` is asserted.
 
-- [**ID Stage:**](../tb/pipelined/component-test/test-id_stage/)
+- **ID Stage:**  
   Confirmed that register file writes and reads behaved correctly, including enforcing `x0` as hard-wired zero. Tested decode and control-vector generation across R-type, I-type loads, S-type stores, B-type branches, JAL/JALR, and U-type instructions.
 
-- [**MEM Stage:**](../tb/pipelined/component-test/test-mem-stage/)  
+- **MEM Stage:**  
   Tested all load/store widths (byte/halfword/word) and sign behaviours, using edge cases such as `0x80` and `0x8000`, verifying both endianness and sign/zero extension. Confirmed that `memReadM` gating behaved as expected.
 
-- [**Writeback Stage:**](../tb/pipelined/component-test/test-wb-stage/)
+- **Writeback Stage:**  
   Tested all `resultSrcW` cases and ensured undefined values default safely to the ALU path, preventing accidental propagation of garbage into the register file.
 
 These unit tests gave stage-local confidence before integrating everything into the full pipelined CPU.
 
 ---
 
-### Pipeline-Level Verifications
+### Pipeline-Level Verifications {#pipeline-level-verifications-pl}
 
 For the full pipelined CPU, rather than building a heavy instruction-level unit test harness, I verified correctness by:
 
@@ -241,13 +239,13 @@ For the full pipelined CPU, rather than building a heavy instruction-level unit 
 - Instrumenting each stage (IF, ID, EX, MEM, WB) with structured debug printouts that log key signals every cycle: PC, instruction fields, ALU inputs/outputs, branch decisions, memory accesses, and writeback values.  
 - Logging hazard-control signals (stalls, flushes, forwarding selections) to understand pipeline behaviour without always opening waveforms.
 
-This textual execution trace acts like a human-readable “waveform with commentary”. It made it far easier to see where things went wrong (e.g. a branch taken but not flushed, or a load-use hazard without stall) and iterate quickly, especially when debugging late-stage integration issues. Once the trace aligned with expected architectural behaviour for all reference programs, we had strong evidence that the pipeline was functionally correct.
+This textual execution trace acts like a human-readable “waveform with commentary”. It made it far easier to see where things went wrong (e.g. a branch taken but not flushed, or a load-use hazard without stall) and iterate quickly, especially when debugging late-stage integration issues. Once the trace aligned with expected architectural behaviour for all reference programs, we had strong evidence that the pipeline was functionally correct. :contentReference[oaicite:4]{index=4}  
 
 ---
 
-## 4. Cache System
+## 4. Cache System {#4-cache-system}
 
-### Development
+### Development {#development-cache}
 
 After the pipelined CPU was stable with a simple byte-addressable DataMemory, I extended the design into a **two-level memory hierarchy** by inserting a data cache between the pipeline and a backing MainMemory. The objective was not to build an extremely aggressive cache, but to introduce *realistic* memory latency while preserving the architectural contract previously provided by DataMemory (byte-level loads/stores, little-endian behaviour, and correct RV32I semantics).
 
@@ -284,7 +282,7 @@ In the current design, each memory access returns in a single cycle once `mem_re
 
 #### 4.3 DataCache Geometry and Organisation
 
-The DataCache implements a **4 KB, 2-way set-associative cache with 16-byte lines**.
+The DataCache implements a **4 KB, 2-way set-associative cache with 16-byte lines**. :contentReference[oaicite:0]{index=0}  
 
 Key parameters:
 
@@ -386,7 +384,7 @@ In the current integration, this stall is used to freeze the parts of the pipeli
 
 ---
 
-### Verifications
+### Verifications {#verifications-cache}
 
 Due to time constraints and because I was the only team member working on the cache subsystem, verification for the cached design focused on **reusing the existing reference programs** rather than building a new, cache-specific unit test suite.
 
@@ -412,9 +410,8 @@ Even with this limitation, the cache subsystem already demonstrates:
 - realistic memory latency injected into the pipeline, and  
 - a clear path for further debugging and extension.
 
----
 
-## 5. Mistakes I Made
+## 5. Mistakes I Made {#5-mistakes-i-made}
 
 Several mistakes were important learning points:
 
@@ -432,7 +429,7 @@ Several mistakes were important learning points:
 
 ---
 
-## 6. Key Design Decisions
+## 6. Key Design Decisions {#6-key-design-decisions}
 
 Some of the most important design choices were:
 
@@ -453,30 +450,30 @@ Some of the most important design choices were:
 
 ---
 
-## 7. Other Contributions
+## 7. Other Contributions {#7-other-contributions}
 
 Beyond core RTL work, I also:
 
 - Helped define and maintain coding style and file structure conventions across the team.  
 - Contributed to Vbuddy testbenches and visualisation setups, especially for earlier labs and for simple single-cycle demos.  
-- Create the Team Final Statements 
+- Wrote documentation and comments describing how to run tests, how the memory preload mechanism works, and how to interpret debug traces.  
 - Assisted teammates in debugging their modules (e.g. aligning control encodings and resolving off-by-one or sign-extension bugs).
 
 These “infrastructure” tasks were less visible than the main CPU pipeline, but they significantly reduced friction in day-to-day development.
 
 ---
 
-## 8. Reflections
+## 8. Reflections {#8-reflections}
 
-### What I Learned
+### What I Learned {#what-i-learned}
 
 This project was my first end-to-end experience of taking a CPU from a single-cycle teaching design to a pipelined, cache-backed implementation. I learned how quickly complexity grows once you introduce hazards, forwarding, and a memory hierarchy, and why clean interfaces and systematic verification are essential rather than optional.
 
-### Mistakes & Corrections
+### Mistakes & Corrections {#mistakes--corrections}
 
 I saw how early shortcuts—like loose naming or incomplete test coverage—come back as integration bugs later. I corrected this by refactoring interfaces, tightening unit tests, and adopting more disciplined Git practices. The experience made me more cautious about “quick hacks” in shared code.
 
-### Improvements for the Future
+### Improvements for the Future {#improvements-for-the-future}
 
 If I were to repeat this project, I would:
 
@@ -484,7 +481,7 @@ If I were to repeat this project, I would:
 - Introduce a minimal CI script to run key tests on every PR.  
 - Document design decisions in real time, not only at the end, so that tradeoffs are recorded while still fresh.
 
-### Key Takeaways
+### Key Takeaways {#key-takeaways}
 
 - Good architecture is as much about clean boundaries and contracts as it is about internal implementation.  
 - Verification must be layered: unit tests, focused assembly tests, and full reference programs all catch different classes of bugs.  
@@ -492,70 +489,17 @@ If I were to repeat this project, I would:
 
 ---
 
-## 9. Commit Records
+## 9. Commit Records {#9-commit-records}
 
+My contributions are reflected across multiple branches, especially:
 
+- `feature/data-memory` and related single-cycle work.  
+- `feature/pipelined-bringup` for the initial pipeline integration.  
+- `feature/data-cache` and `feature/cache-rebuild` for the cache and memory-system work.  
+- Additional support branches for verification and debug instrumentation.
 
 The commit history in these branches documents both the incremental implementation of modules and the iterative debugging process (e.g. hazard fixes, forwarding corrections, and cache integration adjustments). Together, they provide an auditable record of my role in the project.
 
 ---
-## Commit Appendix
-
-| Commit ID | Date | Commit Description |
-|-----------|------|--------------------|
-| 343acc4 | 2025-12-11 | Remove README to prepare for merge |
-| 5cd5cfe | 2025-12-11 | updated statements |
-| 9197cdf | 2025-12-10 | docs: progress on individual contribution statement |
-| 67fcc0f | 2025-12-10 | On cache-rebuild: temp: cache + statement mixed WIP |
-| 08ae5f0 | 2025-12-10 | index on cache-rebuild: 0935cd6 first 4 test good |
-| d8a4b14 | 2025-12-10 | untracked files on cache-rebuild: 0935cd6 first 4 test good |
-| 6e28374 | 2025-12-10 | WIP: cache pipeline + testbench + program.mem updates |
-| 0935cd6 | 2025-12-09 | first 4 test good |
-| c2ef213 | 2025-12-08 | Cache rebuild baseline: pipeline + debug + corrected test program |
-| 752985c | 2025-12-08 | First four test correct |
-| 5f1607e | 2025-12-08 | minimal model |
-| fab2db9 | 2025-12-08 | small fix |
-| 945387d | 2025-12-08 | small fix |
-| 212f364 | 2025-12-07 | Fix regfile debug exposure and improve WB testbench observability |
-| bf82fac | 2025-12-07 | Pipeline bring-up: ALU/addi verified, WB path correct, PC stepping validated via IF trace |
-| a357767 | 2025-12-07 | WIP: pipeline top integration and hazard rewiring |
-| 61a0057 | 2025-12-07 | WIP: pipeline top integration, wiring pass in progress |
-| 5ddab16 | 2025-12-07 | Fix true load-use hazard detection and add HazardUnit gtest |
-| 85b793a | 2025-12-07 | Fix Decode memReadD signal and update gtest for load-use support |
-| 25fff89 | 2025-12-07 | test(wb): verify writeback stage mux for alu mem and PC+4 |
-| b90e80a | 2025-12-07 | test(mem): verify MEM stage; load/store widths and sign extension |
-| f7845c4 | 2025-12-07 | test(ex): verify Execute stage; forwarding, ALUSrc, and branchTaken logic |
-| f30a37c | 2025-12-07 | test(id): verify Decode stage; assert branchD and fix funct7 wiring |
-| a02f06f | 2025-12-07 | test(pipelined): scaffold full component verification structure |
-| b2eddff | 2025-11-30 | Add Execute stage with forwarding and ALU muxing |
-| 626e3ef | 2025-11-30 | Add MEM_STAGE and DataMemory to mem-stage branch |
-| ca9afbb | 2025-11-30 | Add MEM_STAGE, DataMemory copy, WB_STAGE |
-| 32a9666 | 2025-11-29 | Fix DMEM preload, add MemRead support, fix control path, test-reference integration |
-| 2fd7152 | 2025-11-28 | test-reference: added DataMemory preload, program.mem, gaussian.mem, and full test setup |
-| 598986f | 2025-11-28 | Overwrite test-reference with fresh copy from test-general |
-| c98514b | 2025-11-28 | Full general test program and verification output |
-| 85b516f | 2025-11-28 | Add full SRA/SRAI correctness test and verification |
-| 67f977b | 2025-11-28 | nerfed arithmatic program test |
-| dc4d4a6 | 2025-11-28 | Add regfile-zero test (x0 behaviour verified) |
-| 645a4df | 2025-11-28 | Merge branch 'feature/test-immediate' into feature/test-immediate |
-| f0becd2 | 2025-11-28 | Add immediate-format test (SRAI still failing, others OK) |
-| 6dfb968 | 2025-11-28 | Add ALU test (exposes SRAI bug) |
-| 01c93eb | 2025-11-28 | Add load/store test program and testbench for feature/test-loadstore |
-| 97ad589 | 2025-11-28 | Add program.s for branch test |
-| 4f7d595 | 2025-11-26 | Add standalone top-level CPU integration and testbench (top.sv, top_tb.cpp, program.mem, doit.sh) |
-| 022e2da | 2025-11-26 | Resolve conflict: keep CU_verification version of ControlUnit.sv |
-| 8a55383 | 2025-11-26 | Fix CU + GTest + doit.sh working version |
-| f4034d4 | 2025-11-25 | Add GoogleTest verification suite for ControlUnit |
-| c9e8fa9 | 2025-11-25 | Extend verification: add full testbench, updated Extend module, and PC/doit fix |
-| 5f4dff8 | 2025-11-24 | Add new DataMemory design |
-| c3f076c | 2025-11-20 | fix structure (merge develop) |
-| 73d9cab | 2025-11-20 | Restore folder structure from commit a06638c |
-| ba71dae | 2025-11-20 | Merge develop → main to preserve file system |
-| 0e71153 | 2025-11-20 | Add DataMemory module and complete unit verification |
-| 9bd1968 | 2025-11-18 | Add develop branch, PR/issue templates, improved README |
-| a06638c | 2025-11-18 | Add complete folder structure and README placeholders |
-| fa43638 | 2025-11-18 | Add project structure, tasks, contribution docs |
-| 98dde8b | 2025-11-18 | Initial project structure for RISC-V CPU |
-
 
 [^p]: *Partial credit / supporting role.*
