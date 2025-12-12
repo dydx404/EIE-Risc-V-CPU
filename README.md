@@ -22,6 +22,7 @@
 
 ## Planning
 [put all details regarding planning (for both single cycle, pipelined, and cache here)]
+
 ### Pipeline
 We met as a team and began by examining the schematic for the pipelined cpu in lectures, modifying it for our own design.
 
@@ -311,44 +312,17 @@ If a control hazard is detected, the execute and decode stages are flushed (2 in
 
 # Cache
 
-## Cache specifications
-
-word = 32
-
-| Version | Capacity(words) | Words written at once | Blocks in cache | Blocks / set | Sets
-| -------- | :--------: | :--------: | :--------: | :--------: | :--------: |
-| Direct mapped | 8 | 1 | 8 | 1 | 8 |
-| 2 way assosiative | 8 | 1 | 8 | 2 | 4 |
+the cache is solely developed by yi due to lacking time, see his [repo](../EIE-Risc-V-CPU/statements/YiDong.md)
 
 
 
-Legend: L = Lead C = Contributor
-
-We introduced caching mechanisms for both instructions and data. Our initial focus was on configuring the instruction cache due to its relative simplicity; it only required adjustments in one pipelined stage. After successfully implementing and testing the instruction cache, we proceeded to tackle the data cache. We created two SystemVerilog blocks for direct-mapped and two-way associative configurations, seamlessly integrating them into the fetch and execute stages for our instruction and data caches, respectively.
-
-
-## Proof that cache is being used
-
-
-**If the following videos do not work, they are contained within the /imgs folder**
-
-https://github.com/Arc-Cloud/Team04-RISCV-Proj/assets/33992400/e28dd883-036e-4780-bffe-a70179a75b80
 
 
 
-The video above is a screen capture of waveforms produced when CPU with data cache is tested on [the assembly program from lectures](testing/Data%20cache%20test/dcache.asm).
-
-`PCE` shows memory address of the instruction currently in execute stage. We see that `useCacheM` is high when `PCE = 0x10, 0x14, 0x18`. At these points, the instruction in memory stage is each of the lw instructions, and `useCacheM` is high only for lw instructions, so this works as expected. We also see that we get no hits, as expected.
 
 
-Next we get cache hits for instructions from `0x08 and 0x14`, but `useCacheM` is high only for `PCE = 0x10, 0x14, 0x18`; only the lw instructions. So the hit we get by the branch instruction is meaningless, we only consider hits by the load instructions. 
-
-Running through the loop, we see that this pattern continues until the loop ends.
 
 
-## Cache Schematic
-
-![Cache Integrated with Pipelined CPU](/imgs/Integrated%20Cache.jpeg)
 
 
 # Notes
@@ -434,7 +408,7 @@ int main(int argc, char **argv, char **env)
 The tests for both single cycle and the pipelined CPU were written up [here](tb/single_cycle/test-reference/rtl_copy) and [here](tb/pipelined/Ptop) respectively using programs specified in the testing folder.
 
 ### Testing videos
-The following videos demonstrate the F1 program's functionality on a pipelined CPU with both data memory cache and instruction memory cache.
+The following videos demonstrate the F1 program's functionality on a pipelined CPU with both data memory cache and instruction memory cache.the best way to test is to go to our clean version at [Pureversion](../EIE-Risc-V-CPU/test/Pureversion_test_here/)
 
 #### F1 Program:
 [F1](https://github.com/dydx404/EIE-Risc-V-CPU/tree/main/statements/MingzeChen/video/F1.mp4)
