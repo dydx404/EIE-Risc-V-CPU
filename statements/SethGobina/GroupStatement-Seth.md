@@ -1,5 +1,14 @@
 # Control Unit & Immediate Generator
 
+## Contents
+- [Control Unit](#control-unit)  
+- [Instruction Fields](#instruction-fields)  
+- [Control Signals](#control-signals)  
+- [Immediate Generator](#immediate-generator)  
+- [Example: I-type Immediate](#example-i-type-immediate)
+
+---
+
 ## Control Unit
 
 The Control Unit is the **interpreter** of the CPU. It fetches the 32-bit instruction and determines the control signals required by the rest of the architecture. These control signals dictate the outputs of multiplexers, the operations executed by the ALU, and which values are passed in as operands.
