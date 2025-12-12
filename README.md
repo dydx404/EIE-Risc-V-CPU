@@ -265,13 +265,13 @@ For example, for an **I-Immediate**, the Generator:
 2. Sign-extends the 12-bit value to 32 bits.
 
 This is correctly extracted according to the structure predefined for I-Immediates. Other immediate types follow similar patterns, each with its own bit arrangement and reconstruction rules.
-| ImmSrc| ImmExt | Instruction Type 
+| ImmSrc | Immediate Type | Bit Concatenation 
 | -------- | :--------: | :--------: | 
-| 3'b000| {{20{Immediate[31]}}, Immediate[31:20]} | I-type |
-| 3'b001| {{20{Immediate[31]}}, Immediate[31:25], Immediate[11:7]}| S-type|
-| 3'b010| {{20{Immediate[31]}}, Immediate[7], Immediate[30:25], Immediate[11:8], 1'b0}|  B-type|
-| 3'b011| {{12{Immediate[31]}},  Immediate[19:12], Immediate[20], Immediate[30:21], 1'b0} | J-type|
-| 3'b100| {Immediate[31:12], 12'b0}| U-type|
+| 000| I-type | 20 x Immediate[31] + Immediate[31:20] |
+| 001| S-type| 20 x Immediate[31] + Immediate[31:25] + Immediate[11:7] |
+| 010| B-type| 20 x Immediate[31] + Immediate[7] + Immediate[30:25] + Immediate[11:8] + 0|
+| 011| J-type| 12 x Immediate[31] + Immediate[19:12] + Immediate[20] + Immediate[30:21] + 0 |
+| 100| U-type| Immediate[31:12] + 12 x 0| U-type|
 
 ---
 
