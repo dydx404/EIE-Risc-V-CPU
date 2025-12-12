@@ -47,7 +47,63 @@ In order to view values in a particular register of the CPU, we added a signal `
 Below is a code snippet of the test bench. 
 
 ```C++
+int main(int argc, char **argv, char **env)
+{
+    int simcyc;
+    int tick;
 
+    char prog = argv[argc - 1][0];
+
+    Verilated::commandArgs(argc, argv);
+    // init top verilog instance
+    Vtop *top = new Vtop;
+    // init trace dump
+    Verilated::traceEverOn(true);
+    VerilatedVcdC *tfp = new VerilatedVcdC;
+    top->trace(tfp, 99);
+    tfp->open("CPU.vcd");
+
+    // init Vbuddy
+    if (vbdOpen() != 1)
+    {
+        return (-1);
+    }
+    vbdHeader("CPU");
+    vbdSetMode(1);
+
+    // intialise
+    top->clk = 1;
+    top->rst = 1;
+    step_cycle(top);
+    top->rst = 0;
+
+    // run simulation for MAX_SIM_CYC clock cycles
+    for (simcyc = 0; simcyc < MAX_SIM_CYC; simcyc++)
+    {
+        // dump variables into VCD file and toggle clock
+        for (tick = 0; tick < 2; tick++)
+        {
+            tfp->dump(2 * simcyc + tick);
+            top->clk = !top->clk;
+            top->eval();
+        }
+
+        // Test data
+        if (simcyc > 37530) // gaussian=123705, noisy=204890, triangle=316018, sine=37530
+        {
+            vbdPlot(top->a0, 0, 255);
+            vbdBar(top->a0 & 0xFF);
+            vbdCycle(simcyc);
+        }
+
+        // either simulation finished, or 'q' is pressed
+        if (Verilated::gotFinish() || vbdGetkey() == 'q')
+            exit(0);
+    }
+    vbdClose();
+    tfp->close();
+    exit(0);
+}
 ```
 - The master script written in /testing/Master_test automatically configures the outputs depending on the program being run by passing arguments on execution
 
@@ -58,15 +114,15 @@ The tests for both single cycle and the pipelined CPU were written up [here](/te
 The following videos demonstrate the F1 program's functionality on a pipelined CPU with both data memory cache and instruction memory cache.
 
 #### F1 Program:
-
+[F1](https://github.com/dydx404/EIE-Risc-V-CPU/tree/main/statements/MingzeChen/video/F1.mp4)
 #### PDF for Noisy:
-
+[Noisy](https://github.com/dydx404/EIE-Risc-V-CPU/tree/main/statements/MingzeChen/video/Noisy.mp4)
 #### PDF for gaussian:
-
+[Gaussian](https://github.com/dydx404/EIE-Risc-V-CPU/tree/main/statements/MingzeChen/video/Gaussian.mp4)
 #### PDF for sine:
-
+[Sine](https://github.com/dydx404/EIE-Risc-V-CPU/tree/main/statements/MingzeChen/video/Sine.mp4)
 #### PDF for Triangle:
-
+[Triangle](https://github.com/dydx404/EIE-Risc-V-CPU/tree/main/statements/MingzeChen/video/Triangle.mp4)
  
 
 # Single Cycle RV32I Design
@@ -80,13 +136,38 @@ Legend: `L` = Lead `C` = Contributor
 ## Implementation
 
 ### F1 ASM
+```s
+main:
+    JAL ra, init
+    j   main
 
+init:
+    li s2, 0x0   
+    li s3, 0xff  # load s3 with 0xff
+    li a0, 0x0   # result reg init at 0
+    li s4, 0xf  
+
+loopi:
+    slli s2, s2, 1    # shift left by 1
+    addi s2, s2, 1    # add 1
+    and  a0, s3, s2   # and with 0x11111111 
+
+wait:
+    addi s4, s4, -1
+    BNE s4, zero, wait
+    addi s4, zero, 0xf
+    bne s3, s2, loopi
+    ADDI a0, zero, 0
+    RET
+```
 
 ### ALU
 
 
 
 ### PC
+For the program counter, we initially took the approach of separate components and a top-level interface with other components; however, in the end, this proved to be tedious and overly complicated. So, we turned to a flat implementation of the program counter.
+[See implementation](rtl/single_cycle/pc/PCFlat.sv)
 
 ---
 
