@@ -216,9 +216,64 @@ For the program counter, we initially took the approach of separate components a
 ---
 
 
-
 ### Control Unit
+The Control Unit is the **interpreter** of the CPU. It fetches the 32-bit instruction and determines the control signals required by the rest of the architecture. These control signals dictate the outputs of multiplexers, the operations executed by the ALU, and which values are passed in as operands.
 
+There are 3 flags that determine the instruction we will perform. They are extracted from the 32-bit instruction:
+
+* **Opcode** – a broad identifier indicating the general instruction type.
+* **Funct3** and **Funct7** – additional fields used to narrow down the exact instruction, since many share the same opcode.
+* The remaining bits primarily encode immediate values.
+
+To differentiate between all possible instructions, we used `case()` statements on the opcode, funct3, and funct7 fields.
+
+Each control signal plays a specific role in directing data flow through the CPU:
+
+* **RegWrite** – controls whether the Register File is written to.
+* **ALUControl** – selects the ALU operation.
+* **ALUSrc** – chooses the source of the ALU’s second operand.
+* **MemWrite** – controls whether the Data Memory is written to.
+* **PCSrc** – determines the next Program Counter value.
+* **ResultSrc** – selects the data written back to the Register File.
+* **ImmSrc** – identifies the immediate format so the ImmGen can reconstruct it.
+* **AddressingControl** – determines how Data Memory reconstructs loaded data (e.g., sign or zero extension).
+
+|Opcode|Type|RegWrite|ALUSrc|MemWrite|PCSrc|ResultSrc|ImmSrc|AddressingControl|
+|------|----|--------|------|--------|-----|---------|------|-----------------|
+| 0110011 | R-type|1|0|0|00|00|000|000|
+|1100011|Branch|0|0|0|00/01*|00|010|000|
+|0010011|I-type ALU|1|1|0|00|00|000|000|
+|1101111|JAL|1|0|0|01|10|011|000|
+|0000011|Load|1|1|0|00|01|000|funct3|
+|0100011|Store|0|1|1|00|00|001|funct3|
+|1100111|JALR|1|1|0|10|10|000|000|
+|0110111|LUI|1|1|0|00|00|100|000|
+
+---
+
+### Immediate Generator
+The Immediate Generator receives:
+
+* the **full 32-bit instruction** from ROM, and
+* the **ImmSrc** signal from the Control Unit.
+
+Depending on the immediate type, bits within the range `[31:7]` are arranged differently. The Generator extracts these fields and reconstructs the appropriate immediate value using a `case()` on the ImmSrc for each of the 5 different immediate types.
+
+For example, for an **I-Immediate**, the Generator:
+
+1. Extracts bits **[31:20]**.
+2. Sign-extends the 12-bit value to 32 bits.
+
+This is correctly extracted according to the structure predefined for I-Immediates. Other immediate types follow similar patterns, each with its own bit arrangement and reconstruction rules.
+| ImmSrc| ImmExt | Instruction Type 
+| -------- | :--------: | :--------: | 
+| 3'b000| {{20{Immediate[31]}}, Immediate[31:20]} | I-type |
+| 3'b001| {{20{Immediate[31]}}, Immediate[31:25], Immediate[11:7]}| S-type|
+| 3'b010| {{20{Immediate[31]}}, Immediate[7], Immediate[30:25], Immediate[11:8], 1'b0}|  B-type|
+| 3'b011| {{12{Immediate[31]}},  Immediate[19:12], Immediate[20], Immediate[30:21], 1'b0} | J-type|
+| 3'b100| {Immediate[31:12], 12'b0}| U-type|
+
+---
 
 ### Datapath
 - Implemented single cycle datapath by connecting together the individual components.
@@ -250,31 +305,6 @@ For simulation, I added a preload mechanism using `$readmemh`, which loads exter
 and makes it easy to swap test programs without recompiling RTL.
 
 ## Design Decisions
-
-### Control Decoder Table
-| Instruction Type | op | RegWrite | ALUSrc | MemWrite | PCSrc | ImmSrc | ResultSrc
-| -------- | :--------: | :--------: | :--------: | :--------: | :--------: | :--------: | :--------: 
-| R-Type (51) | 0110011 | 1 | 0 | 0 | 00 | xxx | xx
-| B-Type (99) | 1100011 | 0 | 0 | 0 | 00/01 | 010 | xx
-| I-Type (19) | 0010011 | 1 | 1 | 0 | 00 | 000 | 00
-| I-Type (3) | 0000011 | 1 | 1 | 0 | 00 | 000 | 01
-| I-Type (103) | 1100111 | 1 | 1 | 0 | 10 | 000 | 10 
-| J-Type (111) | 1101111 | 1 | x | 1 | 01 | 011 | 10
-| S-Type (35) | 0100011 | 0 | 1 | 1 | 00 | 001 | xx
-
-`AdressingControl` and `ALUControl` Not included as they usually are used to choose case for the Instruction Type being performed 
-
-
-### Sign Extension
- Immsrc is a control signal produced by the control unit given to the `sextend.sv` module. Its purpose is to reconstruct immediate from the instruction word as each type have their own way of mapping the immediate onto the machine code. This control signal basically tells the `sextend.sv` which type of instruction is currently performed so that the immediate can be extracted accordingly.
- 
-| ImmSrc| ImmExt | Instruction Type 
-| -------- | :--------: | :--------: | 
-| 3'b000| {{20{Immediate[31]}}, Immediate[31:20]} | I-type |
-| 3'b001| {{20{Immediate[31]}}, Immediate[31:25], Immediate[11:7]}| S-type|
-| 3'b010| {{20{Immediate[31]}}, Immediate[7], Immediate[30:25], Immediate[11:8], 1'b0}|  B-type|
-| 3'b011| {{12{Immediate[31]}},  Immediate[19:12], Immediate[20], Immediate[30:21], 1'b0} | J-type|
-| 3'b100| {Immediate[31:12], 12'b0}| U-type|
 
 ### Addressing Control
 
