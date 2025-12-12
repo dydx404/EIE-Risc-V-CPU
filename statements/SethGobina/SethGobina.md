@@ -66,158 +66,183 @@ Once I felt I had completed my sections, I tested them by creating C++ test benc
 
 The final iteration of the single‑cycle CPU, however, included heavy alterations resulting from collaboration within the group, primarily to make debugging easier. Instead of distinct blocks for each instruction, the new structure featured a **nested layout**, grouping similar instructions together, such as those with the same Immediate Type or those classified as Branch Instructions. 
 
-```cpp
-#include <gtest/gtest.h>
-#include <verilated.h>
-#include "VControlUnit.h"
+```sv
+module ControlUnit #(
+    //parameter DATA_WIDTH = 32
+) (
+    input  logic        zero,    // used for BEQ/BNE
+    input  logic [6:0]  op,      // opcode
+    input  logic [2:0]  funct3,  // funct3
+    input  logic [6:0]  funct7,  // funct7
 
-static VControlUnit *dut;
+    output logic        RegWrite,
+    output logic [3:0]  ALUControl,
+    output logic        ALUSrc,
+    output logic        MemWrite,
+    output logic [1:0]  PCSrc,
+    output logic [1:0]  ResultSrc,
+    output logic [2:0]  ImmSrc,
+    output logic [2:0]  AddressingControl
+);
 
-static void apply(uint8_t op, uint8_t funct3, uint8_t funct7, bool zero) {
-    dut->op     = op;
-    dut->funct3 = funct3;
-    dut->funct7 = funct7;
-    dut->zero   = zero;
-    dut->eval();
-}
+    // ALU op encoding
+    localparam [3:0] ALU_ADD  = 4'b0000;
+    localparam [3:0] ALU_SUB  = 4'b0001;
+    localparam [3:0] ALU_AND  = 4'b0010;
+    localparam [3:0] ALU_OR   = 4'b0011;
+    localparam [3:0] ALU_XOR  = 4'b0100;
+    localparam [3:0] ALU_SLT  = 4'b0101;
+    localparam [3:0] ALU_SLTU = 4'b0110;
+    localparam [3:0] ALU_SLL  = 4'b0111;
+    localparam [3:0] ALU_SRL  = 4'b1000;
+    localparam [3:0] ALU_SRA  = 4'b1011;
+    localparam [3:0] ALU_LUI  = 4'b1111;
 
-// ---------------------- Tests --------------------------
+    always_comb begin
+        // ---------------------- DEFAULT VALUES ----------------------
+        RegWrite          = 1'b0;
+        ALUControl        = ALU_ADD;
+        ALUSrc            = 1'b0;
+        MemWrite          = 1'b0;
+        PCSrc             = 2'b00; // PC+4
+        ResultSrc         = 2'b00; // ALU result
+        ImmSrc            = 3'b000; // default I-type
+        AddressingControl = 3'b000;
 
-TEST(ControlUnit, Rtype_ADD) {
-    apply(0b0110011, 0b000, 0b0000000, 0);
+        // ---------------------- OPCODE DECODER ----------------------
+        case (op)
 
-    EXPECT_EQ(dut->RegWrite, 1);
-    EXPECT_EQ(dut->ALUSrc,   0);
-    EXPECT_EQ(dut->ALUControl, 0b0000); // ADD
-    EXPECT_EQ(dut->MemWrite, 0);
-    EXPECT_EQ(dut->PCSrc,    0b00);
-    EXPECT_EQ(dut->ResultSrc, 0b00);
-}
+        // ====================== R-TYPE ==============================
+        7'b0110011: begin
+            RegWrite  = 1'b1;
+            ALUSrc    = 1'b0;
+            ResultSrc = 2'b00;
+            PCSrc     = 2'b00;
 
-TEST(ControlUnit, Rtype_SUB) {
-    apply(0b0110011, 0b000, 0b0100000, 0);
+            case (funct3)
+                3'b000: begin
+                    if (funct7 == 7'b0100000)
+                        ALUControl = ALU_SUB;
+                    else
+                        ALUControl = ALU_ADD;
+                end
+                3'b001: ALUControl = ALU_SLL;
+                3'b010: ALUControl = ALU_SLT;
+                3'b011: ALUControl = ALU_SLTU;
+                3'b100: ALUControl = ALU_XOR;
+                3'b110: ALUControl = ALU_OR;
+                3'b111: ALUControl = ALU_AND;
+                3'b101: begin
+                    if (funct7 == 7'b0000000)
+                        ALUControl = ALU_SRL;
+                    else
+                        ALUControl = ALU_SRA;
+                end
+                default: begin end
+            endcase
+        end
 
-    EXPECT_EQ(dut->RegWrite, 1);
-    EXPECT_EQ(dut->ALUSrc,   0);
-    EXPECT_EQ(dut->ALUControl, 0b0001); // SUB
-}
+        // ====================== BRANCHES ============================
+        7'b1100011: begin
+            RegWrite   = 1'b0;
+            ImmSrc     = 3'b010; // B-type
+            ALUSrc     = 1'b0;
+            ALUControl = ALU_SUB;
 
-TEST(ControlUnit, Rtype_AND) {
-    apply(0b0110011, 0b111, 0b0000000, 0);
+            case (funct3)
+                3'b000: PCSrc = zero ? 2'b01 : 2'b00; // BEQ
+                3'b001: PCSrc = zero ? 2'b00 : 2'b01; // BNE
+                default: PCSrc = 2'b00;
+            endcase
+        end
 
-    EXPECT_EQ(dut->ALUControl, 0b0010); // AND
-}
+        // ====================== I-TYPE ALU ==========================
+        7'b0010011: begin
+            RegWrite  = 1'b1;
+            ImmSrc    = 3'b000; // I-type
+            ALUSrc    = 1'b1;
+            ResultSrc = 2'b00;
+            PCSrc     = 2'b00;
 
-TEST(ControlUnit, Itype_ADDI) {
-    apply(0b0010011, 0b000, 0, 0);
+            case (funct3)
+                3'b000: ALUControl = ALU_ADD;   // ADDI
+                3'b010: ALUControl = ALU_SLT;   // SLTI
+                3'b011: ALUControl = ALU_SLTU;  // SLTIU
+                3'b001: ALUControl = ALU_SLL;   // SLLI
+                3'b100: ALUControl = ALU_XOR;   // XORI
+                3'b110: ALUControl = ALU_OR;    // ORI
+                3'b111: ALUControl = ALU_AND;   // ANDI
 
-    EXPECT_EQ(dut->RegWrite, 1);
-    EXPECT_EQ(dut->ALUSrc,   1);
-    EXPECT_EQ(dut->ImmSrc,   0b000);
-    EXPECT_EQ(dut->ALUControl, 0b0000); // ADD
-    EXPECT_EQ(dut->ResultSrc, 0b00);
-    EXPECT_EQ(dut->PCSrc,    0b00);
-}
+                3'b101: begin
+                    if (funct7 == 7'b0000000)
+                        ALUControl = ALU_SRL;  // SRLI
+                    else
+                        ALUControl = ALU_SRA;  // SRAI
+                end
+                default: begin end
+            endcase
+        end
 
-TEST(ControlUnit, Load_LW) {
-    apply(0b0000011, 0b010, 0, 0); // LW
+        // ====================== JAL ================================
+        7'b1101111: begin
+            RegWrite  = 1'b1;
+            ImmSrc    = 3'b011;  // J-type
+            ResultSrc = 2'b10;   // PC+4
+            PCSrc     = 2'b01;   // PC + imm
+            ALUControl = ALU_ADD;
+            ALUSrc    = 1'b0;
+        end
 
-    EXPECT_EQ(dut->RegWrite, 1);
-    EXPECT_EQ(dut->MemWrite, 0);
-    EXPECT_EQ(dut->ImmSrc,   0b000);
-    EXPECT_EQ(dut->ALUSrc,   1);
-    EXPECT_EQ(dut->ALUControl, 0b0000); // ADD
-    EXPECT_EQ(dut->ResultSrc, 0b01);    // from memory
-    EXPECT_EQ(dut->PCSrc,    0b00);
-    EXPECT_EQ(dut->AddressingControl, 0b010);
-}
+        // ====================== LOAD ===============================
+        7'b0000011: begin
+            RegWrite          = 1'b1;
+            ImmSrc            = 3'b000; // I-type
+            ALUSrc            = 1'b1;
+            ALUControl        = ALU_ADD;
+            ResultSrc         = 2'b01; // memory
+            PCSrc             = 2'b00;
+            MemWrite          = 1'b0;
+            AddressingControl = funct3;
+        end
 
-TEST(ControlUnit, Store_SW) {
-    apply(0b0100011, 0b010, 0, 0); // SW
+        // ====================== STORE ==============================
+        7'b0100011: begin
+            RegWrite          = 1'b0;
+            ImmSrc            = 3'b001; // S-type
+            ALUSrc            = 1'b1;
+            ALUControl        = ALU_ADD;
+            PCSrc             = 2'b00;
+            MemWrite          = 1'b1;
+            AddressingControl = funct3;
+        end
 
-    EXPECT_EQ(dut->RegWrite, 0);
-    EXPECT_EQ(dut->MemWrite, 1);
-    EXPECT_EQ(dut->ImmSrc,   0b001);
-    EXPECT_EQ(dut->ALUSrc,   1);
-    EXPECT_EQ(dut->ALUControl, 0b0000); // ADD
-    EXPECT_EQ(dut->PCSrc,    0b00);
-    EXPECT_EQ(dut->AddressingControl, 0b010);
-}
+        // ====================== JALR ===============================
+        7'b1100111: begin
+            RegWrite  = 1'b1;
+            ImmSrc    = 3'b000; // I-type
+            ResultSrc = 2'b10;  // PC+4
+            PCSrc     = 2'b10;  // JALR path
+            ALUControl = ALU_ADD;
+            ALUSrc    = 1'b1;
+        end
 
-TEST(ControlUnit, BEQ_Taken) {
-    apply(0b1100011, 0b000, 0, /*zero=*/1);
+        // ====================== LUI ================================
+        7'b0110111: begin
+            RegWrite  = 1'b1;
+            ImmSrc    = 3'b100; // U-type
+            ResultSrc = 2'b00;  // ALU
+            PCSrc     = 2'b00;
+            ALUSrc    = 1'b1;
+            ALUControl = ALU_LUI;
+        end
 
-    EXPECT_EQ(dut->RegWrite, 0);
-    EXPECT_EQ(dut->PCSrc,    0b01); // branch taken
-    EXPECT_EQ(dut->ImmSrc,   0b010);
-}
+        // ====================== DEFAULT ============================
+        default: begin end
 
-TEST(ControlUnit, BEQ_NotTaken) {
-    apply(0b1100011, 0b000, 0, /*zero=*/0);
-    EXPECT_EQ(dut->PCSrc,    0b00);
-}
+        endcase
+    end
 
-TEST(ControlUnit, BNE_Taken) {
-    apply(0b1100011, 0b001, 0, /*zero=*/0);
-    EXPECT_EQ(dut->PCSrc,    0b01);
-}
-
-TEST(ControlUnit, BNE_NotTaken) {
-    apply(0b1100011, 0b001, 0, /*zero=*/1);
-    EXPECT_EQ(dut->PCSrc,    0b00);
-}
-
-TEST(ControlUnit, JAL) {
-    apply(0b1101111, 0, 0, 0);
-
-    EXPECT_EQ(dut->RegWrite, 1);
-    EXPECT_EQ(dut->PCSrc,    0b01);  // PC+imm
-    EXPECT_EQ(dut->ImmSrc,   0b011); // J-type
-    EXPECT_EQ(dut->ResultSrc, 0b10); // PC+4
-}
-
-TEST(ControlUnit, JALR) {
-    apply(0b1100111, 0, 0, 0);
-
-    EXPECT_EQ(dut->RegWrite, 1);
-    EXPECT_EQ(dut->PCSrc,    0b10);  // JALR path
-    EXPECT_EQ(dut->ImmSrc,   0b000); // I-type
-    EXPECT_EQ(dut->ALUSrc,   1);
-    EXPECT_EQ(dut->ResultSrc, 0b10); // PC+4
-}
-
-TEST(ControlUnit, LUI) {
-    apply(0b0110111, 0, 0, 0);
-
-    EXPECT_EQ(dut->RegWrite, 1);
-    EXPECT_EQ(dut->ImmSrc,   0b100); // U-type
-    EXPECT_EQ(dut->ALUSrc,   1);
-    EXPECT_EQ(dut->ALUControl, 0b1111); // LUI op
-    EXPECT_EQ(dut->ResultSrc, 0b00);
-    EXPECT_EQ(dut->PCSrc,    0b00);
-}
-
-TEST(ControlUnit, UnknownOpcode_Defaults) {
-    apply(0b0000000, 0, 0, 0);
-
-    EXPECT_EQ(dut->RegWrite, 0);
-    EXPECT_EQ(dut->MemWrite, 0);
-    EXPECT_EQ(dut->PCSrc,    0b00);
-    EXPECT_EQ(dut->ResultSrc, 0b00);
-}
-
-// ---------------------- main ---------------------------
-
-int main(int argc, char **argv) {
-    Verilated::commandArgs(argc, argv);
-    ::testing::InitGoogleTest(&argc, argv);
-
-    dut = new VControlUnit;
-    int result = RUN_ALL_TESTS();
-    delete dut;
-
-    return result;
-}
+endmodule
 
 ```
 ---
