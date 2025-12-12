@@ -1,1 +1,1 @@
-gaussian.mem
+reference/gaussian.mem
