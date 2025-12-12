@@ -6,16 +6,6 @@
 
 [Jump](#cache) to Cached CPU Documentation
 
-
-## Repo Structure & Logic
-
-As a team we decided to manage our repo in the following manner:
-- Maintain a main branch containing the final and tested implementations of all CPU versions in their respective folders.
-- The develop branch are used to store code and tb when they are verified
-- we develop on seperate feature branches and combine them later for development
-
-This approach provides a clear overview of our current progress, ensuring a clean and easily interpretable repository during examination.
-
 ## Team Member Statements
 - **Yi Dong** (yi.dong23@imperial.ac.uk)  
   - [Yi Dong's Statement](statements/YiDong.md)
@@ -26,152 +16,43 @@ This approach provides a clear overview of our current progress, ensuring a clea
 - **Mingze Chen** (mingze.chen24@imperial.ac.uk)  
   - [Mingze Chen's Statement](statements/MingzeChen/MingzeChen.md)
 
-## Overall CPU Schematic
+## Final CPU Schematic
 
 ![CPU with Pipelining](../EIE-Risc-V-CPU/docs/img/pipeline.png)(we also Implemented Cache, later)
 
-## Testing the CPU
+## Planning
+[put all details regarding planning (for both single cycle, pipelined, and cache here)]
 
-- There is a script located in the root of the directory called start.sh
-- This links to a master script contained within /testing/Master_test
-- Executing the script displays a menu that enables the execution of various programs on the specified CPU.
+## Repo Structure & Logic
 
-In order to view values in a particular register of the CPU, we added a signal `testRegAddress` which is controlled at the top level module, and outputs data from a given register at the signal `testRegData`. This allows use to use register data to view outputs on vbuddy, which is useful for pdf plots and f1 program.
+As a team we decided to manage our repo in the following manner:
+- Maintain a main branch containing the final and tested implementations of all CPU versions in their respective folders.
+- The develop branch are used to store code and tb when they are verified
+- we develop on seperate feature branches and combine them later for development
 
-### When testing F1 and pdf:
+This approach provides a clear overview of our current progress, ensuring a clean and easily interpretable repository during examination.
 
-- Move into the `testing/Master_test` directory
-- Choose the `cpu_tb.cpp` test bench using single cycle, and `pipe_cpu_tb.cpp` if testing pipelined cpu
-- Both test benches write to CPU.vcd
-
-Below is a code snippet of the test bench. 
-
-```C++
-int main(int argc, char **argv, char **env)
-{
-    int simcyc;
-    int tick;
-
-    char prog = argv[argc - 1][0];
-
-    Verilated::commandArgs(argc, argv);
-    // init top verilog instance
-    Vtop *top = new Vtop;
-    // init trace dump
-    Verilated::traceEverOn(true);
-    VerilatedVcdC *tfp = new VerilatedVcdC;
-    top->trace(tfp, 99);
-    tfp->open("CPU.vcd");
-
-    // init Vbuddy
-    if (vbdOpen() != 1)
-    {
-        return (-1);
-    }
-    vbdHeader("CPU");
-    vbdSetMode(1);
-
-    // intialise
-    top->clk = 1;
-    top->rst = 1;
-    step_cycle(top);
-    top->rst = 0;
-
-    // run simulation for MAX_SIM_CYC clock cycles
-    for (simcyc = 0; simcyc < MAX_SIM_CYC; simcyc++)
-    {
-        // dump variables into VCD file and toggle clock
-        for (tick = 0; tick < 2; tick++)
-        {
-            tfp->dump(2 * simcyc + tick);
-            top->clk = !top->clk;
-            top->eval();
-        }
-
-        // Test data
-        if (simcyc > 37530) // gaussian=123705, noisy=204890, triangle=316018, sine=37530
-        {
-            vbdPlot(top->a0, 0, 255);
-            vbdBar(top->a0 & 0xFF);
-            vbdCycle(simcyc);
-        }
-
-        // either simulation finished, or 'q' is pressed
-        if (Verilated::gotFinish() || vbdGetkey() == 'q')
-            exit(0);
-    }
-    vbdClose();
-    tfp->close();
-    exit(0);
-}
-```
-- The master script written in /testing/Master_test automatically configures the outputs depending on the program being run by passing arguments on execution
-
-### Testing Write Up
-The tests for both single cycle and the pipelined CPU were written up [here](tb/single_cycle/test-reference/rtl_copy) and [here](tb/pipelined/Ptop) respectively using programs specified in the testing folder.
-
-### Testing videos
-The following videos demonstrate the F1 program's functionality on a pipelined CPU with both data memory cache and instruction memory cache.
-
-#### F1 Program:
-[F1](https://github.com/dydx404/EIE-Risc-V-CPU/tree/main/statements/MingzeChen/video/F1.mp4)
-#### PDF for Noisy:
-[Noisy](https://github.com/dydx404/EIE-Risc-V-CPU/tree/main/statements/MingzeChen/video/Noisy.mp4)
-#### PDF for gaussian:
-[Gaussian](https://github.com/dydx404/EIE-Risc-V-CPU/tree/main/statements/MingzeChen/video/Gaussian.mp4)
-#### PDF for sine:
-[Sine](https://github.com/dydx404/EIE-Risc-V-CPU/tree/main/statements/MingzeChen/video/Sine.mp4)
-#### PDF for Triangle:
-[Triangle](https://github.com/dydx404/EIE-Risc-V-CPU/tree/main/statements/MingzeChen/video/Triangle.mp4)
  
 
-# ![Single Cycle RV32I Design](../EIE-Risc-V-CPU/docs/img/single%20cycle.png)
+# Single Cycle RV32I Design
+![](../EIE-Risc-V-CPU/docs/img/single%20cycle.png)
 
-Legend: `L` = Lead `C` = Contributor
-## Single Cycle RV32I Design
 ## Single-Cycle RV32I Design – SystemVerilog Modules
 
 | Module           | Yi | Mingze | Seth | Zain |
 |------------------|:--:|:------:|:----:|:----:|
-| ALU.sv           | L  |        | C    |      |
-| ControlUnit.sv   | L  |        |      | C    |
-| DataMemory.sv    | L  |        | C    |      |
-| Extend.sv        | L  |        |      |      |
-| InstrMem.sv      |    | C      |      | L    |
-| PCFlat.sv        |    | C      |      | L    |
-| RegFile.sv       |    | C      | L    |      |
-| top.sv           | L  |        | C    |      |
+| ALU.sv           |    |        |      | L    |
+| ControlUnit.sv   |    |        | L    |      |
+| DataMemory.sv    | L  |        |      |      |
+| Extend.sv        |    |        | L    |      |
+| InstrMem.sv      |    | L      |      |      |
+| PCFlat.sv        |    | L      |      |      |
+| RegFile.sv       |    |        |      | L    |
+| top.sv           | L  |        |      |      |
 
 **Legend:**  
 - **L** = Lead  
 - **C** = Contributor
-
-## Pipelined RV32I Design – Core Pipeline Structure
-
-| Module            | Yi | Mingze | Seth | Zain |
-|-------------------|:--:|:------:|:----:|:----:|
-| fetch.sv          | L  |        |      |      |
-| Decode.sv         | L  |        |      |      |
-| EXECUTE_STAGE.sv  | L  |        | C    |      |
-| MEM_STAGE.sv      | L  |        | C    |      |
-| WB_STAGE.sv       | L  |        |      |      |
-| IF_ID.sv          |    | C      |      |      |
-| ID_EX.sv          |    | C      |      |      |
-| EX_MEM.sv         |    | C      |      |      |
-| MEM_WB.sv         |    | C      |      |      |
-| HazardUnit.sv     | L  |        | C    |      |
-| PipelineTop.sv    | L  |        | C    |      |
-
-**Legend:**  
-- **L** = Lead  
-- **C** = Contributor
-
-
-
-
-## Planning
-
-
 
 ## Implementation
 
@@ -348,6 +229,26 @@ The addressing control is 3 bits wide, the MSB is to choose between signed or un
 ### Contributions
 
 
+## Pipelined RV32I Design – Core Pipeline Structure
+
+| Module            | Yi | Mingze | Seth | Zain |
+|-------------------|:--:|:------:|:----:|:----:|
+| fetch.sv          | L  |        |      |      |
+| Decode.sv         | L  |        |      |      |
+| EXECUTE_STAGE.sv  | L  |        | C    |      |
+| MEM_STAGE.sv      | L  |        | C    |      |
+| WB_STAGE.sv       | L  |        |      |      |
+| IF_ID.sv          |    | C      |      |      |
+| ID_EX.sv          |    | C      |      |      |
+| EX_MEM.sv         |    | C      |      |      |
+| MEM_WB.sv         |    | C      |      |      |
+| HazardUnit.sv     | L  |        | C    |      |
+| PipelineTop.sv    | L  |        | C    |      |
+
+**Legend:**  
+- **L** = Lead  
+- **C** = Contributor
+
 `mux.sv` is a 4 input multiplexer used as 3 instances in the architecture.
 
 Legend: `L` = Lead `C` = Contributor
@@ -464,3 +365,100 @@ Running through the loop, we see that this pattern continues until the loop ends
 ## Cache Schematic
 
 ![Cache Integrated with Pipelined CPU](/imgs/Integrated%20Cache.jpeg)
+
+
+# Notes
+
+## Testing the CPU
+
+- There is a script located in the root of the directory called start.sh
+- This links to a master script contained within /testing/Master_test
+- Executing the script displays a menu that enables the execution of various programs on the specified CPU.
+
+In order to view values in a particular register of the CPU, we added a signal `testRegAddress` which is controlled at the top level module, and outputs data from a given register at the signal `testRegData`. This allows use to use register data to view outputs on vbuddy, which is useful for pdf plots and f1 program.
+
+### When testing F1 and pdf:
+
+- Move into the `testing/Master_test` directory
+- Choose the `cpu_tb.cpp` test bench using single cycle, and `pipe_cpu_tb.cpp` if testing pipelined cpu
+- Both test benches write to CPU.vcd
+
+Below is a code snippet of the test bench. 
+
+```C++
+int main(int argc, char **argv, char **env)
+{
+    int simcyc;
+    int tick;
+
+    char prog = argv[argc - 1][0];
+
+    Verilated::commandArgs(argc, argv);
+    // init top verilog instance
+    Vtop *top = new Vtop;
+    // init trace dump
+    Verilated::traceEverOn(true);
+    VerilatedVcdC *tfp = new VerilatedVcdC;
+    top->trace(tfp, 99);
+    tfp->open("CPU.vcd");
+
+    // init Vbuddy
+    if (vbdOpen() != 1)
+    {
+        return (-1);
+    }
+    vbdHeader("CPU");
+    vbdSetMode(1);
+
+    // intialise
+    top->clk = 1;
+    top->rst = 1;
+    step_cycle(top);
+    top->rst = 0;
+
+    // run simulation for MAX_SIM_CYC clock cycles
+    for (simcyc = 0; simcyc < MAX_SIM_CYC; simcyc++)
+    {
+        // dump variables into VCD file and toggle clock
+        for (tick = 0; tick < 2; tick++)
+        {
+            tfp->dump(2 * simcyc + tick);
+            top->clk = !top->clk;
+            top->eval();
+        }
+
+        // Test data
+        if (simcyc > 37530) // gaussian=123705, noisy=204890, triangle=316018, sine=37530
+        {
+            vbdPlot(top->a0, 0, 255);
+            vbdBar(top->a0 & 0xFF);
+            vbdCycle(simcyc);
+        }
+
+        // either simulation finished, or 'q' is pressed
+        if (Verilated::gotFinish() || vbdGetkey() == 'q')
+            exit(0);
+    }
+    vbdClose();
+    tfp->close();
+    exit(0);
+}
+```
+- The master script written in /testing/Master_test automatically configures the outputs depending on the program being run by passing arguments on execution
+
+### Testing Write Up
+The tests for both single cycle and the pipelined CPU were written up [here](tb/single_cycle/test-reference/rtl_copy) and [here](tb/pipelined/Ptop) respectively using programs specified in the testing folder.
+
+### Testing videos
+The following videos demonstrate the F1 program's functionality on a pipelined CPU with both data memory cache and instruction memory cache.
+
+#### F1 Program:
+[F1](https://github.com/dydx404/EIE-Risc-V-CPU/tree/main/statements/MingzeChen/video/F1.mp4)
+#### PDF for Noisy:
+[Noisy](https://github.com/dydx404/EIE-Risc-V-CPU/tree/main/statements/MingzeChen/video/Noisy.mp4)
+#### PDF for gaussian:
+[Gaussian](https://github.com/dydx404/EIE-Risc-V-CPU/tree/main/statements/MingzeChen/video/Gaussian.mp4)
+#### PDF for sine:
+[Sine](https://github.com/dydx404/EIE-Risc-V-CPU/tree/main/statements/MingzeChen/video/Sine.mp4)
+#### PDF for Triangle:
+[Triangle](https://github.com/dydx404/EIE-Risc-V-CPU/tree/main/statements/MingzeChen/video/Triangle.mp4)
