@@ -22,6 +22,10 @@
 
 ## Planning
 [put all details regarding planning (for both single cycle, pipelined, and cache here)]
+### Pipeline
+We met as a team and began by examining the schematic for the pipelined cpu in lectures, modifying it for our own design.
+
+Once this was done each team member was assigned a stage to work on and we began our implementation of the pipelined cpu, keeping frequent communication between team members to ensure each module interfaced correctly with one another.
 
 ## Repo Structure & Logic
 
@@ -216,10 +220,6 @@ The addressing control is 3 bits wide, the MSB is to choose between signed or un
 
 # Pipelined RV32I Design
 
-
-### Contributions
-
-
 ## Pipelined RV32I Design – Core Pipeline Structure
 
 | Module            | Yi | Mingze | Seth | Zain |
@@ -229,10 +229,10 @@ The addressing control is 3 bits wide, the MSB is to choose between signed or un
 | EXECUTE_STAGE.sv  | L  |        | C    |      |
 | MEM_STAGE.sv      | L  |        | C    |      |
 | WB_STAGE.sv       | L  |        |      |      |
-| IF_ID.sv          |    | C      |      |      |
-| ID_EX.sv          |    | C      |      |      |
-| EX_MEM.sv         |    | C      |      |      |
-| MEM_WB.sv         |    | C      |      |      |
+| IF_ID.sv          |    |        |      | L    |
+| ID_EX.sv          |    |        |      | L    |
+| EX_MEM.sv         |    |        |      | L    |
+| MEM_WB.sv         |    | =      |      | L    |
 | HazardUnit.sv     | L  |        | C    |      |
 | PipelineTop.sv    | L  |        | C    |      |
 
@@ -244,22 +244,19 @@ The addressing control is 3 bits wide, the MSB is to choose between signed or un
 
 Legend: `L` = Lead `C` = Contributor
 
-## Planning
-
-We met as a team and began by examining the schematic for the pipelined cpu in lectures, modifying it for our own design.
-
-Once this was done each team member was assigned a stage to work on and we began our implementation of the pipelined cpu, keeping frequent communication between team members to ensure each module interfaced correctly with one another.
 
 ## Implementation
 
-### Changes to Existing Modules
+### Pipelining
+The pipeline of each stage is the one to its left.
 
-#### ALU Pipelined
+We decided on this convention since we thought it would be easier to reason between stalling and flushing. Stalling implies that the inputs to the stage should remain unchanged, whereas flushing entails zeroing the inputs to the stage. As such, it made sense to define each pipeline of a stage to to the left of its corresponding stage. 
+
+### ALU Pipelined
 
 Additions were made to the [alu block](rtl_pipelined/alu.sv). It implements the rest of the branch type instructions, by setting the `Zero` flag high whenever a branch test is passed for example, for `blt`, if `SrcA < SrcB`, `Zero` is high. This means that if the current instruction in execute stage happens to be a branch type instruction and the test is passed, `BranchE` will be high from the control unit, and so will `Zero` from the ALU. As such, `ALUSrc` will be high, and a branch will be effected. 
 
-#### Control Unit Pipelined
-
+### Control Unit Pipelined
 The improvements in the control unit module improve efficiency, readability, and robustness of control logic. This includes better handling of instruction types, streamlined input processing, and the introduction of new control signals for enhanced functionality. 
 key differences:
 
@@ -275,11 +272,7 @@ key differences:
 
 - more cleanly structured with consistent indentation and improved commenting, improving code readability and maintainability.
 
-### Pipelining
 
-The pipeline of each stage is the one to its left.
-
-We decided on this convention since we thought it would be easier to reason between stalling and flushing. Stalling implies that the inputs to the stage should remain unchanged, whereas flushing entails zeroing the inputs to the stage. As such, it made sense to define each pipeline of a stage to to the left of its corresponding stage. 
 
 The hazard unit produces `StallFetch`, `StallDecode`, `FlushExecute`, `FlushDecode`. These are inputs to the relevant pipelines for those stages that need to be flushed or stalled. Inside the pipelined, when stall signal is high, the signals at the pipeline's inputs are not passed to the outputs, while when flush signal is high, the outputs are low. 
 
@@ -291,7 +284,6 @@ Each stage is in its own module; the inputs to the module are those that are act
 - Created IF/ID (Instruction Fetch/Decode), ID/EX (Decode/Execute), EX/MEM (Execute/Memory), and MEM/WB (Memory/Writeback) register modules to latch both data signals and control signals. Each register supports stall (holding state) and flush (inserting bubble) so hazard unit can handle data and control hazards.
 
 ### Hazard Unit
-
 The [Hazard unit](./rtl_pipelined/hazard_unit.sv) allows for the pipelined CPU to be able to perform instructions correctly without incurring delays for some special cases to ensure that it is as efficient as possible.
 
 There are 3 different cases that we encountered that poses a challenge to pipelining and may result in an error if not taken care of which are the following:
@@ -310,11 +302,8 @@ Lw issue is solved by stalling the decode and fetch stages. As such, we must flu
 
 If a control hazard is detected, the execute and decode stages are flushed (2 instructions after branch instruction are flushed) before moving to correct instruction. 
 
-
-
 ## Finalised Pipelined CPU Schematic
-
-
+![Image of pipelined CPU schematic]()
 
 # Cache
 
