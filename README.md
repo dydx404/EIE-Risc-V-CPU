@@ -224,17 +224,17 @@ The addressing control is 3 bits wide, the MSB is to choose between signed or un
 
 | Module            | Yi | Mingze | Seth | Zain |
 |-------------------|:--:|:------:|:----:|:----:|
-| fetch.sv          | L  |        |      |      |
-| Decode.sv         | L  |        |      |      |
-| EXECUTE_STAGE.sv  | L  |        | C    |      |
-| MEM_STAGE.sv      | L  |        | C    |      |
+| fetch.sv          |    | L      |      |      |
+| Decode.sv         |    | L      | L    |      |
+| EXECUTE_STAGE.sv  | L  |        |      |      |
+| MEM_STAGE.sv      | L  |        |      |      |
 | WB_STAGE.sv       | L  |        |      |      |
 | IF_ID.sv          |    |        |      | L    |
 | ID_EX.sv          |    |        |      | L    |
 | EX_MEM.sv         |    |        |      | L    |
-| MEM_WB.sv         |    | =      |      | L    |
-| HazardUnit.sv     | L  |        | C    |      |
-| PipelineTop.sv    | L  |        | C    |      |
+| MEM_WB.sv         |    |        |      | L    |
+| HazardUnit.sv     |    | L      |      |      |
+| PipelineTop.sv    |    | L      |      |      |
 
 **Legend:**  
 - **L** = Lead  
