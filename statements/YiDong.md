@@ -40,7 +40,6 @@ As the Repository Master and Lead Developer, I led the architectural design, imp
   - [8. Reflections](#8-reflections)
     - [What I Learned](#what-i-learned)
     - [Mistakes \& Corrections](#mistakes--corrections)
-    - [Improvements for the Future](#improvements-for-the-future)
     - [Key Takeaways](#key-takeaways)
   - [9. Commit Records](#9-commit-records)
   - [Commit Appendix](#commit-appendix)
@@ -98,7 +97,7 @@ Each instruction flows through the classic five conceptual stages—fetch, decod
 
 The main challenges here were aligning control signals across modules implemented by different team members and keeping the top-level wiring readable. My contribution included standardising signal names and ensuring that the Control Unit, Immediate Generator, and DataMemory agreed on encodings (e.g. for addressing modes and result selection).
 
-![Single-cycle datapath](../docs/img/single%20cycle.png)
+![Single-cycle Top](../docs/img/single%20cycle.png)
 
 #### Control Unit Contribution [^p]
 
@@ -117,7 +116,7 @@ This unified control scheme is reused unchanged in the transition to the pipelin
 
 ### Unit Verifications
 
-I verified the DataMemory using a Verilator + GoogleTest unit testbench that directly exercised all RV32I load/store widths and sign behaviours. The tests covered:
+I verified the [DataMemory](../tb/unit/data_memory/) using a Verilator + GoogleTest unit testbench that directly exercised all RV32I load/store widths and sign behaviours. The tests covered:
 
 - Correct LB/LBU, LH/LHU, LW behaviour and sign/zero extension.  
 - Little-endian ordering using hand-crafted patterns in memory.  
@@ -233,7 +232,7 @@ These unit tests gave stage-local confidence before integrating everything into 
 
 ---
 
-### Pipeline-Level Verifications
+### [Pipeline-Level Verifications](../tb/pipelined/Ptop/)
 
 For the full pipelined CPU, rather than building a heavy instruction-level unit test harness, I verified correctness by:
 
@@ -245,7 +244,7 @@ This textual execution trace acts like a human-readable “waveform with comment
 
 ---
 
-## 4. Cache System
+## 4. [Cache System](../rtl/cache/top/)
 
 ### Development
 
@@ -253,8 +252,8 @@ After the pipelined CPU was stable with a simple byte-addressable DataMemory, I 
 
 At a high level, the new hierarchy consists of:
 
-- a **DataCache** module directly connected to the MEM stage, and  
-- a simple **MainMemory** module acting as the next level in the hierarchy.
+- a [**DataCache**](../rtl/cache/top/DataCache.sv) module directly connected to the MEM stage, and  
+- a simple [**MainMemory**](../rtl/cache/top/MainMemory.sv) module acting as the next level in the hierarchy.
 
 The MEM stage now talks exclusively to the DataCache, and the DataCache is responsible for maintaining the illusion of a byte-granular, low-latency memory whenever there is a cache hit.
 
@@ -396,7 +395,7 @@ Concretely, I tested the cached system using:
 - The first four programs from the `tb/asm` test suite (ALU, loads/stores, immediates, and branches/jumps).  
 - The official `pdf.asm` reference program used to validate overall CPU behaviour.
 
-For the first four `tb/asm` programs, the cached pipeline produced the **same architectural results** (register contents and relevant memory locations) as the known-good uncached pipeline. This provides strong evidence that:
+For the first four `tb/asm` programs, and the F1 programme the cached pipeline produced the **same architectural results** (register contents and relevant memory locations) as the known-good uncached pipeline. This provides strong evidence that:
 
 - cache hits correctly preserve load/store semantics,  
 - misses and refills do not corrupt memory state, and  
@@ -430,7 +429,6 @@ Several mistakes were important learning points:
 - **Hazard Corner Cases:**  
   Some subtle hazards (e.g. corner cases in load-use and branch-after-load) were not covered by the earliest tests. These only emerged once full programs were run through the pipeline, which highlighted gaps in my initial unit-test coverage assumptions.
 
----
 
 ## 6. Key Design Decisions
 
@@ -476,25 +474,16 @@ This project was my first end-to-end experience of taking a CPU from a single-cy
 
 I saw how early shortcuts—like loose naming or incomplete test coverage—come back as integration bugs later. I corrected this by refactoring interfaces, tightening unit tests, and adopting more disciplined Git practices. The experience made me more cautious about “quick hacks” in shared code.
 
-### Improvements for the Future
-
-If I were to repeat this project, I would:
-
-- Plan the hazard and forwarding scheme earlier and build tests around it from the start.  
-- Introduce a minimal CI script to run key tests on every PR.  
-- Document design decisions in real time, not only at the end, so that tradeoffs are recorded while still fresh.
-
 ### Key Takeaways
 
 - Good architecture is as much about clean boundaries and contracts as it is about internal implementation.  
 - Verification must be layered: unit tests, focused assembly tests, and full reference programs all catch different classes of bugs.  
 - Tooling and workflow decisions (Git, debug strategy, repo structure) have a direct impact on how fast you can debug, integrate, and extend a design.
+-  more communications inside teams
 
 ---
 
 ## 9. Commit Records
-
-
 
 The commit history in these branches documents both the incremental implementation of modules and the iterative debugging process (e.g. hazard fixes, forwarding corrections, and cache integration adjustments). Together, they provide an auditable record of my role in the project.
 
