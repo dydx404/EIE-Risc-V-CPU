@@ -324,6 +324,10 @@ The hazard unit produces `StallFetch`, `StallDecode`, `FlushExecute`, `FlushDeco
 Each pipeline is in its own module, and those that are flushed / stalled at some point have internal signals to control that. 
 Each stage is in its own module; the inputs to the module are those that are actually used for computing some value in that stage, while those that aren't used are connected directly to the next pipeline in the [top level module](rtl_pipelined/pipelined_cpu.sv). 
 
+### Pipeline Registers
+- Pipeline registers were implemented between each stage to seperate datapath and control signals across cycles.
+- Created IF/ID (Instruction Fetch/Decode), ID/EX (Decode/Execute), EX/MEM (Execute/Memory), and MEM/WB (Memory/Writeback) register modules to latch both data signals and control signals. Each register supports stall (holding state) and flush (inserting bubble) so hazard unit can handle data and control hazards.
+
 ### Hazard Unit
 
 The [Hazard unit](./rtl_pipelined/hazard_unit.sv) allows for the pipelined CPU to be able to perform instructions correctly without incurring delays for some special cases to ensure that it is as efficient as possible.
