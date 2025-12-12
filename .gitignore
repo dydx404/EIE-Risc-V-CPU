@@ -21,3 +21,5 @@ __pycache__/
 # Misc
 .vbuddy/
 *.log
+commits.txt
+my_commits.txt
