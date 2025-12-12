@@ -149,6 +149,7 @@ To validate the integrated single-cycle CPU, I helped design and/or run several 
 
 - [**Reference Program (`pdf.asm`):**](../tb/single_cycle/test-reference) 
   Finally, the CPU was run against the official reference program. Correct final register and memory states, as well as correct use of subroutines (JAL), confirmed that the single-cycle core matched the expected architectural behaviour across a realistic, multi-function workload.
+  Although not using the officail Macro, I use compilers to compile reference programs required for the pass and sun them seperately, i was tricked by the psuedoinstruction at the second one but after converting it, I got all correcting results
 
 Together, these tests gave high confidence that the single-cycle core was architecturally correct before we moved on to pipelining.
 
@@ -236,11 +237,13 @@ These unit tests gave stage-local confidence before integrating everything into 
 
 For the full pipelined CPU, rather than building a heavy instruction-level unit test harness, I verified correctness by:
 
-- Running the official reference programs in the pipeline top under Verilator.  
+- Running the official reference programs in the pipeline top .  
 - Instrumenting each stage (IF, ID, EX, MEM, WB) with structured debug printouts that log key signals every cycle: PC, instruction fields, ALU inputs/outputs, branch decisions, memory accesses, and writeback values.  
 - Logging hazard-control signals (stalls, flushes, forwarding selections) to understand pipeline behaviour without always opening waveforms.
 
 This textual execution trace acts like a human-readable “waveform with commentary”. It made it far easier to see where things went wrong (e.g. a branch taken but not flushed, or a load-use hazard without stall) and iterate quickly, especially when debugging late-stage integration issues. Once the trace aligned with expected architectural behaviour for all reference programs, we had strong evidence that the pipeline was functionally correct.
+
+Similar to Single cycle, I use a compiler to decode the assembly in the five tests and gets correct results 
 
 ---
 
