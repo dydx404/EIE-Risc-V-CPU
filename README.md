@@ -279,8 +279,9 @@ The hazard unit produces `StallFetch`, `StallDecode`, `FlushExecute`, `FlushDeco
 Each pipeline is in its own module, and those that are flushed / stalled at some point have internal signals to control that. 
 Each stage is in its own module; the inputs to the module are those that are actually used for computing some value in that stage, while those that aren't used are connected directly to the next pipeline in the [top level module](rtl_pipelined/pipelined_cpu.sv). 
 
-### Decode 
-The decode stage is in essence a top level module for the control unit, register file, and immediate generator, and brings together all of these into a singular module. It carries out the decoding of instructions, produces control signals, performs the extraction of data from the Register File, and  formulates an immediate through the ImmGen module. All of these data are then forwarded to the ID-EX register, where the signals from the Hazard module determine how they are passed along. The decode module also passes signals from the IF-ID register, but these signals are not directly involved in the workings of the module.
+### Decode
+The [decode stage](rtl/pipelined/stages/id_stage/Decode.sv) is in essence a top level module for the control unit, register file, and immediate generator, and brings together all of these into a singular module. It carries out the decoding of instructions, produces control signals, performs the extraction of data from the Register File, and  formulates an immediate through the ImmGen module. 
+All of these data are then forwarded to the ID-EX register, where the signals from the Hazard module determine how they are passed along. The decode module also passes signals from the IF-ID register, but these signals are not directly involved in the workings of the module.
 
 ### Pipeline Registers
 - Pipeline registers were implemented between each stage to seperate datapath and control signals across cycles.
